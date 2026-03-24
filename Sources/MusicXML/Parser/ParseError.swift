@@ -58,6 +58,12 @@ extension XMLNode {
         return value
     }
     
+    func asEnum<T>() throws(ParseError) -> T where T: RawRepresentable, T.RawValue == String, T: CaseIterable {
+        let string = try self.asText()
+        guard let value = T(rawValue: string) else { throw ParseError.invalidValue(actual: string, acceptableValues: T.allCases.map(\.rawValue)) }
+        return value
+    }
+    
     /// `<part-name>Piano</part-name>`
     func asTextContainer() throws(ParseError) -> String {
         let element = try self.asElement()
@@ -115,7 +121,8 @@ extension XMLNode {
 
 extension XMLElement {
     
-    func attribute<T>(named name: String, as type: T.Type) throws(ParseError) -> T {
+    @_disfavoredOverload
+    func attribute<T>(named name: String, as type: T.Type = T.self) throws(ParseError) -> T {
         guard let attribute = self.attribute(forName: name) else {
             throw .noSuchAttribute(name: name)
         }
@@ -127,6 +134,23 @@ extension XMLElement {
             throw .attributeError(name: name, error: .typeMismatch(expected: "\(T.self)", actual: "\(actualType)"))
         }
         return object
+    }
+    
+    func attribute<T>(named name: String, as type: T.Type = T.self) throws(ParseError) -> T where T: RawRepresentable, T: CaseIterable, T.RawValue == String {
+        guard let attribute = self.attribute(forName: name) else {
+            throw .noSuchAttribute(name: name)
+        }
+        guard attribute.kind == .attribute else {
+            throw .attributeError(name: name, error: .kindMismatch(expected: .attribute, actual: attribute.kind))
+        }
+        guard let object = attribute.objectValue as? String else {
+            let actualType = Swift.type(of: attribute.objectValue)
+            throw .attributeError(name: name, error: .typeMismatch(expected: "\(String.self)", actual: "\(actualType)"))
+        }
+        guard let result = T(rawValue: object) else {
+            throw .attributeError(name: name, error: .invalidValue(actual: object, acceptableValues: T.allCases.map(\.rawValue)))
+        }
+        return result
     }
     
 }

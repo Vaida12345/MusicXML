@@ -7,6 +7,7 @@
 
 import Foundation
 import DetailedDescription
+import Essentials
 
 
 public struct MusicXMLDocument {
@@ -16,7 +17,13 @@ public struct MusicXMLDocument {
     public let parts: [Part]
     
     init(data: Data) throws {
-        let document = try XMLDocument(data: data)
+        let document: XMLDocument
+        
+        if Array(data[0..<2]) == [Character("P").asciiValue!, Character("K").asciiValue!] {
+            document = try decodeMXL(data: data)
+        } else {
+            document = try XMLDocument(data: data)
+        }
         let root = document.rootElement()!
         
         self.version = try? root.attribute(named: "version", as: String.self)

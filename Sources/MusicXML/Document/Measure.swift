@@ -17,7 +17,7 @@ extension MusicXMLDocument {
         /// The attribute that identifies the measure.
         public let number: String
         
-        public let attributes: Attributes
+        public let attributes: Attributes?
         
         public let notes: [Note]
         
@@ -32,7 +32,7 @@ extension MusicXMLDocument {
             }
             self.notes = notes
             
-            self.attributes = try element.withChild(named: "attributes", Attributes.init)
+            self.attributes = try? element.withChild(named: "attributes", Attributes.init)
         }
         
     }
@@ -44,7 +44,7 @@ extension MusicXMLDocument.Measure: DetailedStringConvertible {
     
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Measure>) -> any DescriptionBlockProtocol {
         descriptor.container("measure #\(number)") {
-            descriptor.value(for: \.attributes)
+            descriptor.optional(for: \.attributes)
             descriptor.sequence(for: \.notes)
         }
     }

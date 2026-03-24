@@ -38,7 +38,7 @@ extension MusicXMLDocument {
             
             var tie: [StartStop] = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
-                try tie.append(child.asEnumContainer())
+                try tie.append(child.attribute(named: "type"))
             }
             self.ties = tie
             

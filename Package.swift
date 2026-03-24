@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Vaida12345/Essentials.git", from: "1.0.0"),
         .package(url: "https://github.com/Vaida12345/DetailedDescription.git", from: "2.1.0"),
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -24,7 +25,8 @@ let package = Package(
             name: "MusicXML",
             dependencies: [
                 "Essentials",
-                "DetailedDescription"
+                "DetailedDescription",
+                "ZIPFoundation"
             ]
         ),
         .testTarget(

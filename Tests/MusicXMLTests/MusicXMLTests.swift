@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import MusicXML
 
 let text = """
@@ -59,7 +60,7 @@ let text = """
     let measure = part.measures.first!
     #expect(measure.number == "1")
     
-    let attributes = measure.attributes
+    let attributes = measure.attributes!
     #expect(attributes.divisions == 1)
     #expect(attributes.keySignature.fifths == 0)
     #expect(attributes.timeSignature.beats == 4)
@@ -74,4 +75,19 @@ let text = """
     #expect(note.pitch.alteration == nil)
     #expect(note.duration == 4)
     #expect(note.type == .whole)
+}
+
+@Test func nightfall() async throws {
+    let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Nightfall.musicxml")
+    let data = try Data(contentsOf: source)
+    let document = try MusicXMLDocument(data: data)
+    print(document)
+}
+
+
+@Test func compressed() async throws {
+    let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Nightfall.mxl")
+    let data = try Data(contentsOf: source)
+    let document = try MusicXMLDocument(data: data)
+    print(document)
 }
