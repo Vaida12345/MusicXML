@@ -16,6 +16,7 @@ indirect enum ParseError: Error {
     case childNodeError(name: String, error: ParseError)
     case attributeError(name: String, error: ParseError)
     case invalidChildCount(expected: Int, actual: Int)
+    case invalidValue(actual: String, acceptableValues: [String])
 }
 
 
@@ -39,6 +40,24 @@ extension XMLNode {
         return object
     }
     
+    func asDoubleContainer() throws(ParseError) -> Double {
+        let string = try self.asTextContainer()
+        guard let value = Double(string) else { throw ParseError.typeMismatch(expected: "Double", actual: "String") }
+        return value
+    }
+    
+    func asIntContainer() throws(ParseError) -> Int {
+        let string = try self.asTextContainer()
+        guard let value = Int(string) else { throw ParseError.typeMismatch(expected: "Int", actual: "String") }
+        return value
+    }
+    
+    func asEnumContainer<T>() throws(ParseError) -> T where T: RawRepresentable, T.RawValue == String, T: CaseIterable {
+        let string = try self.asTextContainer()
+        guard let value = T(rawValue: string) else { throw ParseError.invalidValue(actual: string, acceptableValues: T.allCases.map(\.rawValue)) }
+        return value
+    }
+    
     /// `<part-name>Piano</part-name>`
     func asTextContainer() throws(ParseError) -> String {
         let element = try self.asElement()
@@ -60,16 +79,34 @@ extension XMLNode {
         return child
     }
     
+    func hasChild(named name: String) -> Bool {
+        (self.children ?? []).contains(where: { $0.name == name })
+    }
+    
     /// Expected child as an element.
     func withChild<T>(named name: String, _ body: (XMLElement) throws(ParseError) -> T) throws(ParseError) -> T {
         let child = try self.child(named: name)
         
         do {
             let child = try child.asElement()
-            
             return try body(child)
         } catch {
-            throw ParseError.childNodeError(name: "score-part", error: error)
+            throw .childNodeError(name: name, error: error)
+        }
+    }
+    
+    /// Expected child as an element.
+    func forEachChild(named name: String, _ body: (XMLElement) throws(ParseError) -> Void) throws(ParseError) {
+        let children = self.children ?? []
+        var counter = 0
+        for child in children where child.name == name {
+            do {
+                let child = try child.asElement()
+                try body(child)
+            } catch {
+                throw .childNodeError(name: name + " #\(counter)", error: error)
+            }
+            counter += 1
         }
     }
     

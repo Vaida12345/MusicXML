@@ -6,36 +6,62 @@
 //
 
 import Foundation
+import DetailedDescription
 
 
 extension MusicXMLDocument {
     
-    public struct PartList {
+    public struct PartList: RandomAccessCollection {
         
+        private let scores: [Element]
+        
+        public var startIndex: Int { self.scores.startIndex }
+        public var endIndex: Int { self.scores.endIndex }
+        public subscript(position: Int) -> Element { self.scores[position] }
+        
+        init(element: XMLElement) throws(ParseError) {
+            var scores: [Element] = []
+            try element.forEachChild(named: "score-part") { (scorePart) throws(ParseError) in
+                try scores.append(Element(element: scorePart))
+            }
+            self.scores = scores
+        }
         
         public struct Element {
-            public let id: String
-            public let name: String
+            public var id: String
+            public var name: String
             
             
-            init(node: XMLNode) throws(ParseError) {
-                let element = try node.asElement()
-                let scorePart = try element.child(named: "score-part")
-                do {
-                    let scorePart = try scorePart.asElement()
-                    self.id = try scorePart.attribute(named: "id", as: String.self)
-                    
-                    let name = try scorePart.child(named: "part-name")
-                    do {
-                        self.name = try name.asTextContainer()
-                    } catch {
-                        throw ParseError.childNodeError(name: "part-name", error: error)
-                    }
-                } catch {
-                    throw ParseError.childNodeError(name: "score-part", error: error as! ParseError)
+            init(element: XMLElement) throws(ParseError) {
+                self.id = try element.attribute(named: "id", as: String.self)
+                
+                var name: String = ""
+                try element.withChild(named: "part-name") { (child) throws(ParseError) in
+                    name = try child.asTextContainer()
                 }
+                
+                self.name = name
             }
         }
+    }
+    
+}
+
+
+extension MusicXMLDocument.PartList: DetailedStringConvertible {
+    
+    public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.PartList>) -> any DescriptionBlockProtocol {
+        descriptor.sequence("", of: self.scores)
+            .hideIndex()
+    }
+    
+}
+
+
+extension MusicXMLDocument.PartList.Element: CustomStringConvertible {
+    
+    public var description: String {
+        self.id + " (" + self.name + ")"
     }
     
 }
