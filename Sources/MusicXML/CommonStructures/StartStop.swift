@@ -9,3 +9,8 @@
 public enum StartStop: String, CaseIterable {
     case start, stop
 }
+
+
+public enum StartStopDiscontinue: String, CaseIterable {
+    case start, stop, discontinue
+}

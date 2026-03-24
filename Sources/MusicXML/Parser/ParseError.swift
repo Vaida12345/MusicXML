@@ -102,6 +102,42 @@ extension XMLNode {
     }
     
     /// Expected child as an element.
+    func withOptionalChild<T>(named name: String, _ body: (XMLElement) throws(ParseError) -> T) throws(ParseError) -> T? {
+        guard let child = try? self.child(named: name) else { return nil }
+        
+        do {
+            let child = try child.asElement()
+            return try body(child)
+        } catch {
+            throw .childNodeError(name: name, error: error)
+        }
+    }
+    
+    /// Expected child as an element.
+    func withChild<T>(named name: String, _ body: (XMLElement) -> () throws(ParseError) -> T) throws(ParseError) -> T {
+        let child = try self.child(named: name)
+        
+        do {
+            let child = try child.asElement()
+            return try body(child)()
+        } catch {
+            throw .childNodeError(name: name, error: error)
+        }
+    }
+    
+    /// Expected child as an element.
+    func withOptionalChild<T>(named name: String, _ body: (XMLElement) -> () throws(ParseError) -> T) throws(ParseError) -> T? {
+        guard let child = try? self.child(named: name) else { return nil }
+        
+        do {
+            let child = try child.asElement()
+            return try body(child)()
+        } catch {
+            throw .childNodeError(name: name, error: error)
+        }
+    }
+    
+    /// Expected child as an element.
     func forEachChild(named name: String, _ body: (XMLElement) throws(ParseError) -> Void) throws(ParseError) {
         let children = self.children ?? []
         var counter = 0

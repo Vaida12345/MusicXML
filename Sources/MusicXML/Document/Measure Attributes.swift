@@ -22,12 +22,12 @@ extension MusicXMLDocument.Measure {
         init(element: XMLElement) throws(ParseError) {
             assert(element.name == "attributes")
             
-            self.divisions = try? element.withChild(named: "divisions", XMLElement.asIntContainer)()
+            self.divisions = try element.withOptionalChild(named: "divisions", XMLElement.asIntContainer)
             
             self.keySignature = try element.withChild(named: "key", KeySignature.init)
             self.timeSignature = try element.withChild(named: "time", TimeSignature.init)
             
-            self.staves = try? element.withChild(named: "staves", XMLElement.asIntContainer)()
+            self.staves = try element.withOptionalChild(named: "staves", XMLElement.asIntContainer)
             
             self.clef = try element.withChild(named: "clef", Clef.init)
         }
@@ -68,8 +68,8 @@ extension MusicXMLDocument.Measure.Attributes {
             self.octave = octave
             
             self.cancel = element.hasChild(named: "cancel")
-            self.fifths = try element.withChild(named: "fifths", XMLElement.asIntContainer)()
-            self.mode = try? element.withChild(named: "mode", XMLElement.asEnumContainer)()
+            self.fifths = try element.withChild(named: "fifths", XMLElement.asIntContainer)
+            self.mode = try element.withOptionalChild(named: "mode", XMLElement.asEnumContainer)
         }
         
         public enum Mode: String, CaseIterable, Equatable {
@@ -88,8 +88,8 @@ extension MusicXMLDocument.Measure.Attributes {
         init(element: XMLElement) throws(ParseError) {
             assert(element.name == "time")
             
-            self.beats = try element.withChild(named: "beats", XMLElement.asIntContainer)()
-            self.beatType = try element.withChild(named: "beat-type", XMLElement.asIntContainer)()
+            self.beats = try element.withChild(named: "beats", XMLElement.asIntContainer)
+            self.beatType = try element.withChild(named: "beat-type", XMLElement.asIntContainer)
         }
     }
     
@@ -101,8 +101,8 @@ extension MusicXMLDocument.Measure.Attributes {
         init(element: XMLElement) throws(ParseError) {
             assert(element.name == "clef")
             
-            self.sign = try element.withChild(named: "sign", XMLElement.asEnumContainer)()
-            self.line = try element.withChild(named: "line", XMLElement.asIntContainer)()
+            self.sign = try element.withChild(named: "sign", XMLElement.asEnumContainer)
+            self.line = try element.withChild(named: "line", XMLElement.asIntContainer)
         }
         
         public enum Sign: String, CaseIterable, CustomStringConvertible {

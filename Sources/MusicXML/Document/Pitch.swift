@@ -27,9 +27,9 @@ extension MusicXMLDocument.Note {
         init(element: XMLElement) throws(ParseError) {
             assert(element.name == "pitch")
             
-            self.step = try element.withChild(named: "step", XMLElement.asEnumContainer)()
-            self.alteration = try? element.withChild(named: "alter", XMLElement.asDoubleContainer)()
-            self.octave = try element.withChild(named: "octave", XMLElement.asIntContainer)()
+            self.step = try element.withChild(named: "step", XMLElement.asEnumContainer)
+            self.alteration = try element.withOptionalChild(named: "alter", XMLElement.asDoubleContainer)
+            self.octave = try element.withChild(named: "octave", XMLElement.asIntContainer)
         }
         
         enum Step: String, CaseIterable {

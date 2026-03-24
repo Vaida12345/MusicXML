@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/Vaida12345/Essentials.git", from: "1.0.0"),
         .package(url: "https://github.com/Vaida12345/DetailedDescription.git", from: "2.1.0"),
+        .package(url: "https://github.com/Vaida12345/MacroCollection.git", from: "1.0.0"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.0")
     ],
     targets: [
@@ -26,7 +27,8 @@ let package = Package(
             dependencies: [
                 "Essentials",
                 "DetailedDescription",
-                "ZIPFoundation"
+                "ZIPFoundation",
+                "MacroCollection"
             ]
         ),
         .testTarget(

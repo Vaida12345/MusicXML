@@ -23,7 +23,7 @@ extension MusicXMLDocument {
         public let dot: Int
         public let accidental: Accidental?
         public let timeModification: TimeModification?
-        public let stem: Direction?
+        public let stem: VerticalDirection?
         public let staff: Int?
         /// Number of beams
         public let beams: [Beam]
@@ -34,7 +34,7 @@ extension MusicXMLDocument {
             guard !element.hasChild(named: "rest") else { return nil }
             self.isChord = element.hasChild(named: "chord")
             self.pitch = try element.withChild(named: "pitch", Pitch.init)
-            self.duration = try element.withChild(named: "duration", XMLElement.asIntContainer)()
+            self.duration = try element.withChild(named: "duration", XMLElement.asIntContainer)
             
             var tie: [StartStop] = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
@@ -42,13 +42,13 @@ extension MusicXMLDocument {
             }
             self.ties = tie
             
-            self.voice = try? element.withChild(named: "voice", XMLElement.asIntContainer)()
-            self.type = try? element.withChild(named: "type", XMLElement.asEnumContainer)()
+            self.voice = try element.withOptionalChild(named: "voice", XMLElement.asIntContainer)
+            self.type = try element.withOptionalChild(named: "type", XMLElement.asEnumContainer)
             self.dot = (element.children ?? []).count(where: { $0.name == "dot" })
-            self.accidental = try? element.withChild(named: "accidental", XMLElement.asEnumContainer)()
-            self.timeModification = try? element.withChild(named: "time-modification", TimeModification.init)
-            self.stem = try? element.withChild(named: "stem", XMLElement.asEnumContainer)()
-            self.staff = try? element.withChild(named: "staff", XMLElement.asIntContainer)()
+            self.accidental = try element.withOptionalChild(named: "accidental", XMLElement.asEnumContainer)
+            self.timeModification = try element.withOptionalChild(named: "time-modification", TimeModification.init)
+            self.stem = try element.withOptionalChild(named: "stem", XMLElement.asEnumContainer)
+            self.staff = try element.withOptionalChild(named: "staff", XMLElement.asIntContainer)
             
             var beam: [Beam] = []
             try element.forEachChild(named: "beam") { (child) throws(ParseError) in
@@ -68,8 +68,8 @@ extension MusicXMLDocument {
             
             init(element: XMLElement) throws(ParseError) {
                 assert(element.name == "time-modification")
-                self.actual = try element.withChild(named: "actual-notes", XMLElement.asIntContainer)()
-                self.normal = try element.withChild(named: "normal-notes", XMLElement.asIntContainer)()
+                self.actual = try element.withChild(named: "actual-notes", XMLElement.asIntContainer)
+                self.normal = try element.withChild(named: "normal-notes", XMLElement.asIntContainer)
             }
         }
         
