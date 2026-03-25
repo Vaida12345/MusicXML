@@ -6,13 +6,14 @@
 //
 
 import Foundation
+import AEXML
 import DetailedDescription
 
 
 extension MusicXMLDocument {
-    
+
     public struct Note {
-        
+
         public let isChord: Bool
         public let pitch: Pitch
         public let duration: Int
@@ -27,59 +28,59 @@ extension MusicXMLDocument {
         public let staff: Int?
         /// Number of beams
         public let beams: [Beam]
-        
-        
+
+
         /// Returns `nil` when self does not produce a sound.
-        init?(element: XMLElement) throws(ParseError) {
+        init?(element: AEXMLElement) throws(ParseError) {
             guard !element.hasChild(named: "rest") else { return nil }
             self.isChord = element.hasChild(named: "chord")
             self.pitch = try element.withChild(named: "pitch", Pitch.init)
-            self.duration = try element.withChild(named: "duration", XMLElement.asIntContainer)
-            
+            self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
+
             var tie: [StartStop] = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
                 try tie.append(child.attribute(named: "type"))
             }
             self.ties = tie
-            
-            self.voice = try element.withOptionalChild(named: "voice", XMLElement.asIntContainer)
-            self.type = try element.withOptionalChild(named: "type", XMLElement.asEnumContainer)
-            self.dot = (element.children ?? []).count(where: { $0.name == "dot" })
-            self.accidental = try element.withOptionalChild(named: "accidental", XMLElement.asEnumContainer)
+
+            self.voice = try element.withOptionalChild(named: "voice", AEXMLElement.asIntContainer)
+            self.type = try element.withOptionalChild(named: "type", AEXMLElement.asEnumContainer)
+            self.dot = element.children.count(where: { $0.name == "dot" })
+            self.accidental = try element.withOptionalChild(named: "accidental", AEXMLElement.asEnumContainer)
             self.timeModification = try element.withOptionalChild(named: "time-modification", TimeModification.init)
-            self.stem = try element.withOptionalChild(named: "stem", XMLElement.asEnumContainer)
-            self.staff = try element.withOptionalChild(named: "staff", XMLElement.asIntContainer)
-            
+            self.stem = try element.withOptionalChild(named: "stem", AEXMLElement.asEnumContainer)
+            self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
+
             var beam: [Beam] = []
             try element.forEachChild(named: "beam") { (child) throws(ParseError) in
                 try beam.append(child.asEnumContainer())
             }
             self.beams = beam
-            
+
             // notations are ignored.
         }
-        
-        
+
+
         public struct TimeModification {
             /// Describes how many notes are played in the time usually occupied by ``normal``.
             let actual: Int
             /// Normal notes count.
             let normal: Int
-            
-            init(element: XMLElement) throws(ParseError) {
+
+            init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "time-modification")
-                self.actual = try element.withChild(named: "actual-notes", XMLElement.asIntContainer)
-                self.normal = try element.withChild(named: "normal-notes", XMLElement.asIntContainer)
+                self.actual = try element.withChild(named: "actual-notes", AEXMLElement.asIntContainer)
+                self.normal = try element.withChild(named: "normal-notes", AEXMLElement.asIntContainer)
             }
         }
-        
+
     }
-    
+
 }
 
 
 extension MusicXMLDocument.Note: DetailedStringConvertible {
-    
+
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note>) -> any DescriptionBlockProtocol {
         descriptor.container(self.pitch.description) {
             if self.isChord {
@@ -102,5 +103,5 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
         }
         .hideEmptySequence()
     }
-    
+
 }

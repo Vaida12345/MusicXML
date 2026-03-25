@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AEXML
 import ZIPFoundation
 
 enum MXLDecodeError: Error {
@@ -14,27 +15,27 @@ enum MXLDecodeError: Error {
     case missingRootfileEntry(String)
 }
 
-func decodeMXL(data: Data) throws -> XMLDocument {
+func decodeMXL(data: Data) throws -> AEXMLDocument {
     let archive = try Archive(data: data, accessMode: .read)
-    
+
     // 1) Read META-INF/container.xml to discover the root MusicXML file
     guard let containerEntry = archive["META-INF/container.xml"] else {
         throw MXLDecodeError.missingContainerXML
     }
-    
+
     let containerData = try extract(entry: containerEntry, from: archive)
-    let containerDoc = try XMLDocument(data: containerData, options: [])
-    
+    let containerDoc = try AEXMLDocument(xml: containerData)
+
     // container.xml contains something like:
     // <rootfile full-path="score.xml" media-type="application/vnd.recordare.musicxml+xml"/>
     let rootfilePath = try findRootfileFullPath(in: containerDoc)
     guard let rootEntry = archive[rootfilePath] else {
         throw MXLDecodeError.missingRootfileEntry(rootfilePath)
     }
-    
+
     // 2) Extract the actual MusicXML file and parse
     let musicXMLData = try extract(entry: rootEntry, from: archive)
-    return try XMLDocument(data: musicXMLData, options: [])
+    return try AEXMLDocument(xml: musicXMLData)
 }
 
 private func extract(entry: Entry, from archive: Archive) throws -> Data {
@@ -45,12 +46,29 @@ private func extract(entry: Entry, from archive: Archive) throws -> Data {
     return data
 }
 
-private func findRootfileFullPath(in containerDoc: XMLDocument) throws -> String {
-    // Simple XPath; works with typical container.xml (ignores namespaces).
-    // If your container.xml uses default namespaces, you may need namespace-aware XPath.
-    let nodes = try containerDoc.nodes(forXPath: "//*[local-name()='rootfile']/@full-path")
-    if let attr = nodes.first, let path = attr.stringValue, !path.isEmpty {
+private func findRootfileFullPath(in containerDoc: AEXMLDocument) throws -> String {
+    if let path = findRootfileElement(in: containerDoc.root)?.attributes["full-path"], !path.isEmpty {
         return path
     }
     throw MXLDecodeError.missingRootfilePath
+}
+
+private func findRootfileElement(in element: AEXMLElement) -> AEXMLElement? {
+    if localName(of: element.name) == "rootfile" {
+        return element
+    }
+
+    for child in element.children {
+        if let result = findRootfileElement(in: child) {
+            return result
+        }
+    }
+    return nil
+}
+
+private func localName(of qualifiedName: String) -> String {
+    if let colonIndex = qualifiedName.lastIndex(of: ":") {
+        return String(qualifiedName[qualifiedName.index(after: colonIndex)...])
+    }
+    return qualifiedName
 }

@@ -6,15 +6,16 @@
 //
 
 import Foundation
+import AEXML
 import DetailedDescription
 
 
 extension MusicXMLDocument.Measure {
-    
+
     public enum Direction {
         case metronome(Metronome)
-        
-        init?(element: XMLElement) throws(ParseError) {
+
+        init?(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "direction")
             let value: Direction? = try element.withChild(named: "direction-type") { type throws(ParseError) in
                 guard let metronome = try type.withOptionalChild(named: "metronome", Metronome.init) else { return nil }
@@ -23,30 +24,29 @@ extension MusicXMLDocument.Measure {
             guard let value else { return nil }
             self = value
         }
-        
-        
+
+
         public struct Metronome {
-            
+
             public let beatUnit: NoteType
             public let dots: Int
             public let rhs: RHS?
-            
+
             public enum RHS {
                 case perMinute(Int)
                 case beat(beatUnit: NoteType, dots: Int)
             }
-            
-            init(element: XMLElement) throws(ParseError) {
-                guard var iterator = element.children?.makeIterator() else { throw .invalidChildCount(expected: 1, actual: 0) }
+
+            init(element: AEXMLElement) throws(ParseError) {
+                var iterator = element.children.makeIterator()
                 guard let beatUnitElement = iterator.next() else { throw .invalidChildCount(expected: 1, actual: 0) }
                 do {
-                    let element = try beatUnitElement.asElement()
-                    guard element.name == "beat-unit" else { throw ParseError.noSuchChild(name: "beat-unit") }
-                    self.beatUnit = try element.asEnumContainer()
+                    guard beatUnitElement.name == "beat-unit" else { throw ParseError.noSuchChild(name: "beat-unit") }
+                    self.beatUnit = try beatUnitElement.asEnumContainer()
                 } catch {
                     throw .childNodeError(name: "beat-unit", error: error as! ParseError)
                 }
-                
+
                 var dots = 0
                 var next = iterator.next()
                 while next?.name == "beat-unit-dot" {
@@ -54,23 +54,23 @@ extension MusicXMLDocument.Measure {
                     next = iterator.next()
                 }
                 self.dots = dots
-                
+
                 while next?.name == "beat-unit-tied" { // skip this
                     next = iterator.next()
                 }
-                
+
                 guard let next else { throw .invalidChildCount(expected: 2, actual: 1) }
                 if next.name == "per-minute" {
                     self.rhs = (try? next.asIntContainer()).map({ .perMinute($0) })
                 } else if next.name == "beat-unit", let rhsBeatUnit: NoteType = try? next.asEnumContainer() {
-                    
+
                     var dots = 0
                     var next = iterator.next()
                     while next?.name == "beat-unit-dot" {
                         dots += 1
                         next = iterator.next()
                     }
-                    
+
                     self.rhs = .beat(beatUnit: rhsBeatUnit, dots: dots)
                 } else {
                     self.rhs = nil
@@ -82,7 +82,7 @@ extension MusicXMLDocument.Measure {
 
 
 extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
-    
+
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Measure.Direction>) -> any DescriptionBlockProtocol {
         descriptor.container {
             switch self {

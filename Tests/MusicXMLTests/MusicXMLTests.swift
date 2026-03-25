@@ -42,7 +42,7 @@ let text = """
 </score-partwise>
 """
 
-@Test(.disabled()) func example() async throws {
+@Test func example() async throws {
     let data = text.data(using: .utf8)!
     let musicXML = try MusicXMLDocument(data: data)
     
@@ -85,7 +85,7 @@ let text = """
 }
 
 
-@Test(.disabled()) func compressed() async throws {
+@Test func compressed() async throws {
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Nightfall.mxl")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)

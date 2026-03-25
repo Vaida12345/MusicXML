@@ -1,6 +1,15 @@
 {
-  "originHash" : "4c2b9bce15b6a265c36f3696f2a5b7baa39ea4ceb0389d9ee8de2a48e1a82cec",
+  "originHash" : "000237361890e67450ae949f67148755d221b5b0d3831a47f1711b36bde9aae2",
   "pins" : [
+    {
+      "identity" : "aexml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tadija/AEXML.git",
+      "state" : {
+        "revision" : "db806756c989760b35108146381535aec231092b",
+        "version" : "4.7.0"
+      }
+    },
     {
       "identity" : "detaileddescription",
       "kind" : "remoteSourceControl",
