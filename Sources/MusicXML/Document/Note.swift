@@ -63,9 +63,9 @@ extension MusicXMLDocument {
 
         public struct TimeModification {
             /// Describes how many notes are played in the time usually occupied by ``normal``.
-            let actual: Int
+            public let actual: Int
             /// Normal notes count.
-            let normal: Int
+            public let normal: Int
 
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "time-modification")
