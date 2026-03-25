@@ -8,10 +8,12 @@
 import Foundation
 import AEXML
 import DetailedDescription
+import MacroCollection
 
 
 extension MusicXMLDocument.Measure {
 
+    @accessingAssociatedValues
     public enum Direction {
         case metronome(Metronome)
 
