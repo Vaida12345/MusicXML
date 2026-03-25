@@ -13,20 +13,45 @@ import MacroCollection
 
 extension MusicXMLDocument.Measure {
 
-    @accessingAssociatedValues
-    public enum Direction {
-        case metronome(Metronome)
-
-        init?(element: AEXMLElement) throws(ParseError) {
-            assert(element.name == "direction")
-            let value: Direction? = try element.withChild(named: "direction-type") { type throws(ParseError) in
-                guard let metronome = try type.withOptionalChild(named: "metronome", Metronome.init) else { return nil }
-                return .metronome(metronome)
-            }
-            guard let value else { return nil }
-            self = value
+    public struct Direction {
+        public let contents: [Content]
+        public let sound: Sound?
+        /// Staff values are numbers, with 1 referring to the top-most staff in a part.
+        public let staff: Int?
+        
+        @accessingAssociatedValues
+        public enum Content {
+            case metronome(Metronome)
+            case octaveShift(OctaveShift)
+            case unknown(String)
         }
 
+        init(element: AEXMLElement) throws(ParseError) {
+            assert(element.name == "direction")
+            
+            var contents: [Content] = []
+            for child in element.children where child.name == "direction-type" {
+                guard let firstChild = child.children.first else { continue }
+                
+                switch firstChild.name {
+                case "metronome":
+                    let metronome = try Metronome(element: firstChild)
+                    contents.append(.metronome(metronome))
+                    
+                case "octave-shift":
+                    let octaveShift = try OctaveShift(element: firstChild)
+                    contents.append(.octaveShift(octaveShift))
+                    
+                default:
+                    contents.append(.unknown(firstChild.name))
+                }
+            }
+            self.contents = contents
+            self.sound = try element.withOptionalChild(named: "sound", Sound.init)
+            self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
+        }
+
+        
 
         public struct Metronome {
 
@@ -79,6 +104,63 @@ extension MusicXMLDocument.Measure {
                 }
             }
         }
+        
+        public struct Sound {
+            public let tempo: Int?
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "sound")
+                self.tempo = try? element.attribute(named: "tempo")
+            }
+        }
+        
+        public struct OctaveShift {
+            public let phrase: StartStopContinue
+            /// Positive for up, negative for down. for example, 1 means 8va.
+            ///
+            /// If `nil`, use previous value.
+            public let shift: Int?
+            
+            /// Distinguishes multiple octave shifts when they overlap in MusicXML document order.
+            public let number: Int?
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "octave-shift")
+                let type: String = try element.attribute(named: "type")
+                
+                var signum: Int? = nil
+                let phrase: StartStopContinue
+                
+                switch type {
+                case "up":
+                    phrase = .start
+                    signum = 1
+                case "down":
+                    phrase = .start
+                    signum = -1
+                case "stop":
+                    phrase = .stop
+                case "continue":
+                    phrase = .continue
+                default:
+                    throw ParseError.invalidValue(actual: type, acceptableValues: ["up", "down", "stop", "continue"])
+                }
+                
+                let shift: Int
+                let size: String? = try? element.attribute(named: "size")
+                switch size {
+                case "8": shift = 1
+                case "15": shift = 2
+                case "22": shift = 3
+                default: shift = 1
+                }
+                
+                self.phrase = phrase
+                self.shift = signum.map({ $0 * shift })
+                
+                self.number = try? element.attribute(named: "number")
+            }
+        }
     }
 }
 
@@ -87,26 +169,33 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
 
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Measure.Direction>) -> any DescriptionBlockProtocol {
         descriptor.container {
-            switch self {
-            case .metronome(let metronome):
-                descriptor.container("metronome") {
-                    descriptor.value("beatUnit", of: metronome.beatUnit)
-                    if metronome.dots != 0 {
-                        descriptor.value("dots", of: metronome.dots)
-                    }
-                    if let rhs = metronome.rhs {
-                        switch rhs {
-                        case .perMinute(let int):
-                            descriptor.value("per minute", of: int)
-                        case .beat(let beatUnit, let dots):
-                            descriptor.value("beatUnit", of: beatUnit)
-                            if metronome.dots != 0 {
-                                descriptor.value("dots", of: dots)
+            descriptor.forEach(self.contents) { content in
+                switch content {
+                case .metronome(let metronome):
+                    descriptor.container("metronome") {
+                        descriptor.value("beatUnit", of: metronome.beatUnit)
+                        if metronome.dots != 0 {
+                            descriptor.value("dots", of: metronome.dots)
+                        }
+                        if let rhs = metronome.rhs {
+                            switch rhs {
+                            case .perMinute(let int):
+                                descriptor.value("per minute", of: int)
+                            case .beat(let beatUnit, let dots):
+                                descriptor.value("beatUnit", of: beatUnit)
+                                if metronome.dots != 0 {
+                                    descriptor.value("dots", of: dots)
+                                }
                             }
                         }
                     }
+                case .octaveShift(let shift):
+                    descriptor.constant("octaveShift(\(shift))")
+                case .unknown(let unknown):
+                    descriptor.constant("unknown(\(unknown))")
                 }
             }
+            descriptor.optional(for: \.sound)
         }
     }
 }

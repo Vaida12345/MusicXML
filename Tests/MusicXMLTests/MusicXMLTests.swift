@@ -70,9 +70,9 @@ let text = """
     
     #expect(measure.contents.count == 1)
     let note = measure.contents.first!.as(.note)!
-    #expect(note.pitch.step == .C)
-    #expect(note.pitch.octave == 4)
-    #expect(note.pitch.alteration == nil)
+    #expect(note.pitch?.step == .C)
+    #expect(note.pitch?.octave == 4)
+    #expect(note.pitch?.alteration == nil)
     #expect(note.duration == 4)
     #expect(note.type == .whole)
 }
@@ -88,6 +88,5 @@ let text = """
 @Test func compressed() async throws {
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Nightfall.mxl")
     let data = try Data(contentsOf: source)
-    let document = try MusicXMLDocument(data: data)
-    print(document)
+    _ = try MusicXMLDocument(data: data)
 }

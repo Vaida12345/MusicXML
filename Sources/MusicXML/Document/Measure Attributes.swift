@@ -19,7 +19,6 @@ extension MusicXMLDocument.Measure {
         public let timeSignature: TimeSignature
         public let staves: Int?
         public let clef: Clef
-        public let sound: Sound?
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "attributes")
@@ -32,7 +31,6 @@ extension MusicXMLDocument.Measure {
             self.staves = try element.withOptionalChild(named: "staves", AEXMLElement.asIntContainer)
 
             self.clef = try element.withChild(named: "clef", Clef.init)
-            self.sound = try? element.withChild(named: "sound", Sound.init)
         }
 
     }
@@ -121,15 +119,6 @@ extension MusicXMLDocument.Measure.Attributes {
             }
         }
     }
-    
-    public struct Sound {
-        public let tempo: Int?
-        
-        init(element: AEXMLElement) throws(ParseError) {
-            assert(element.name == "sound")
-            self.tempo = try? element.attribute(named: "tempo")
-        }
-    }
 
 }
 
@@ -142,7 +131,6 @@ extension MusicXMLDocument.Measure.Attributes: DetailedStringConvertible {
             if keySignature != .none {
                 descriptor.value("keySignature", of: keySignature)
             }
-            descriptor.value(for: \.keySignature)
             descriptor.optional(for: \.staves)
             descriptor.value(for: \.clef)
         }

@@ -48,7 +48,7 @@ extension MusicXMLDocument {
                         contents.append(.barline(barline))
 
                     case "direction":
-                        guard let direction = try Direction(element: child) else { continue }
+                        let direction = try Direction(element: child)
                         contents.append(.direction(direction))
 
                     case "attributes": // will be handled in the following lines.

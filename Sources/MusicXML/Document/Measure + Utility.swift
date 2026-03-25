@@ -18,7 +18,7 @@ extension MusicXMLDocument.Measure {
      <chord/> = this note starts at the same time as the previous note, so do not advance before placing it
      */
 
-    /// - Returns: onset of each individual note (`Note`) in local time (this measure) in divisions.
+    /// - Returns: onset of each non-rest note (`Note`) in local time (this measure) in divisions.
     public func makeNoteEventPositions() -> (totalTime: Int, mapping: [Int : Int]) {
         var localTime: Int = 0
         var results: [Int : Int] = [:]
@@ -30,7 +30,9 @@ extension MusicXMLDocument.Measure {
                     localTime -= note.duration
                 }
                 
-                results[note.id] = localTime
+                if note.pitch != nil {
+                    results[note.id] = localTime
+                }
                 localTime += note.duration
                 
             case .backup(let duration):

@@ -11,6 +11,10 @@ extension MusicXMLDocument.Measure {
         case start, stop
     }
     
+    public enum StartStopContinue: String, CaseIterable {
+        case start, stop, `continue`
+    }
+    
     
     public enum StartStopDiscontinue: String, CaseIterable {
         case start, stop, discontinue
