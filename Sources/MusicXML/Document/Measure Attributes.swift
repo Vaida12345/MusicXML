@@ -44,6 +44,8 @@ extension MusicXMLDocument.Measure.Attributes {
         /// Indicates that the old key signature should be cancelled before the new one appears
         public let cancel: Bool
         /// The number of flats or sharps in a traditional key signature
+        ///
+        /// Negative numbers are used for flats and positive numbers for sharps, reflecting the key's placement within the circle of fifths
         public let fifths: Int
         public let mode: Mode?
         
@@ -62,7 +64,7 @@ extension MusicXMLDocument.Measure.Attributes {
             assert(element.name == "key")
             
             var octave: [Int] = []
-            try element.forEachChild(named: "octave") { (octaveElement) throws(ParseError) in
+            try element.forEachChild(named: "key-octave") { (octaveElement) throws(ParseError) in
                 try octave.append(octaveElement.asIntContainer())
             }
             self.octave = octave

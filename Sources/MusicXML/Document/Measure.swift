@@ -42,8 +42,9 @@ extension MusicXMLDocument {
                         let barline = try BarLine(element: child.asElement())
                         contents.append(.barline(barline))
                         
-                    case "direction": // indicates shifts such as octave-shift, ignore
-                        continue
+                    case "direction":
+                        guard let direction = try Direction(element: child.asElement()) else { continue }
+                        contents.append(.direction(direction))
                         
                     case "attributes": // will be handled in the following lines.
                         continue
@@ -69,6 +70,7 @@ extension MusicXMLDocument {
             case unknown(String)
             case backup(duration: Int)
             case barline(BarLine)
+            case direction(Direction)
         }
         
     }
@@ -82,6 +84,7 @@ extension MusicXMLDocument.Measure.Content: CustomStringConvertible {
         case .backup(let duration): "backup(\(duration))"
         case .unknown(let name): "unknown(\(name))"
         case .barline(let barline): barline.debugDescription
+        case .direction(let direction): direction.debugDescription
         }
     }
 }
