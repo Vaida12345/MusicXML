@@ -6,24 +6,26 @@
 //
 
 
-public enum VerticalDirection: String, CaseIterable, CustomStringConvertible {
-    case up, down
-    
-    public var description: String {
-        switch self {
-        case .up: ".up"
-        case .down: ".down"
+extension MusicXMLDocument.Measure {
+    public enum VerticalDirection: String, CaseIterable, CustomStringConvertible {
+        case up, down
+        
+        public var description: String {
+            switch self {
+            case .up: ".up"
+            case .down: ".down"
+            }
         }
     }
-}
-
-public enum HorizontalDirection: String, CaseIterable, CustomStringConvertible {
-    case forward, backward
     
-    public var description: String {
-        switch self {
-        case .forward: ".forward"
-        case .backward: ".backward"
+    public enum HorizontalDirection: String, CaseIterable, CustomStringConvertible {
+        case forward, backward
+        
+        public var description: String {
+            switch self {
+            case .forward: ".forward"
+            case .backward: ".backward"
+            }
         }
     }
 }

@@ -30,13 +30,13 @@ extension MusicXMLDocument.Measure {
 
         public struct Metronome {
 
-            public let beatUnit: NoteType
+            public let beatUnit: MusicXMLDocument.Note.NoteType
             public let dots: Int
             public let rhs: RHS?
 
             public enum RHS {
                 case perMinute(Int)
-                case beat(beatUnit: NoteType, dots: Int)
+                case beat(beatUnit: MusicXMLDocument.Note.NoteType, dots: Int)
             }
 
             init(element: AEXMLElement) throws(ParseError) {
@@ -64,7 +64,7 @@ extension MusicXMLDocument.Measure {
                 guard let next else { throw .invalidChildCount(expected: 2, actual: 1) }
                 if next.name == "per-minute" {
                     self.rhs = (try? next.asIntContainer()).map({ .perMinute($0) })
-                } else if next.name == "beat-unit", let rhsBeatUnit: NoteType = try? next.asEnumContainer() {
+                } else if next.name == "beat-unit", let rhsBeatUnit: MusicXMLDocument.Note.NoteType = try? next.asEnumContainer() {
 
                     var dots = 0
                     var next = iterator.next()

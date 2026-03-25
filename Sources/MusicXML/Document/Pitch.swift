@@ -13,10 +13,10 @@ extension MusicXMLDocument.Note {
 
     /// Pitch is represented as a combination of the step of the diatonic scale, the chromatic alteration, and the octave.
     public struct Pitch: Equatable, Hashable {
-        let step: Step
-        let alteration: Double?
+        public let step: Step
+        public let alteration: Double?
         /// 0 - 9
-        let octave: Int
+        public let octave: Int
 
         init(step: Step, alteration: Double?, octave: Int) {
             assert(0...9 ~= octave)
@@ -33,8 +33,25 @@ extension MusicXMLDocument.Note {
             self.octave = try element.withChild(named: "octave", AEXMLElement.asIntContainer)
         }
 
-        enum Step: String, CaseIterable {
+        public enum Step: String, CaseIterable {
             case A, B, C, D, E, F, G
+            
+            var offset: Int {
+                switch self {
+                case .C: return 0
+                case .D: return 2
+                case .E: return 4
+                case .F: return 5
+                case .G: return 7
+                case .A: return 9
+                case .B: return 11
+                }
+            }
+        }
+        
+        public var midiPitch: Int {
+            let offset = self.step.offset + Int(self.alteration ?? 0)
+            return (octave + 1) * 12 + offset
         }
     }
 

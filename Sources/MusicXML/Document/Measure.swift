@@ -32,12 +32,16 @@ extension MusicXMLDocument {
                 do {
                     switch child.name {
                     case "note":
-                        guard let note = try Note(element: child) else { continue } // ignore notes that dont produce a sound
+                        let note = try Note(id: index, element: child)
                         contents.append(.note(note))
 
                     case "backup":
                         let duration = try child.withChild(named: "duration", AEXMLElement.asIntContainer)
                         contents.append(.backup(duration: duration))
+                        
+                    case "forward":
+                        let duration = try child.withChild(named: "duration", AEXMLElement.asIntContainer)
+                        contents.append(.forward(duration: duration))
 
                     case "barline":
                         let barline = try BarLine(element: child)
@@ -70,6 +74,7 @@ extension MusicXMLDocument {
             case note(MusicXMLDocument.Note)
             case unknown(String)
             case backup(duration: Int)
+            case forward(duration: Int)
             case barline(BarLine)
             case direction(Direction)
         }
@@ -83,6 +88,7 @@ extension MusicXMLDocument.Measure.Content: CustomStringConvertible {
         switch self {
         case .note(let note): note.debugDescription
         case .backup(let duration): "backup(\(duration))"
+        case .forward(let duration): "forward(\(duration))"
         case .unknown(let name): "unknown(\(name))"
         case .barline(let barline): barline.debugDescription
         case .direction(let direction): direction.debugDescription

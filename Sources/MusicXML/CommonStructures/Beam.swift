@@ -6,10 +6,14 @@
 //
 
 
-public enum Beam: String, CaseIterable {
-    case backwardHook = "backward hook"
-    case begin
-    case `continue`
-    case end
-    case forwardHook = "forward hook"
+extension MusicXMLDocument.Note {
+    
+    public enum Beam: String, CaseIterable {
+        case backwardHook = "backward hook"
+        case begin
+        case `continue`
+        case end
+        case forwardHook = "forward hook"
+    }
+
 }

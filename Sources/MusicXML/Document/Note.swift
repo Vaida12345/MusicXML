@@ -12,32 +12,35 @@ import DetailedDescription
 
 extension MusicXMLDocument {
 
-    public struct Note {
-
+    public struct Note: Identifiable {
+        /// Unique identifier for this note, assigned by this package. This is the offset of this content in measure.
+        public let id: Int
+        /// Whether this note should be connected with the previous one to form a chord.
         public let isChord: Bool
-        public let pitch: Pitch
+        /// If `nil`, this is a rest.
+        public let pitch: Pitch?
         public let duration: Int
-        public let ties: [StartStop]
+        public let ties: [MusicXMLDocument.Measure.StartStop]
         public let voice: Int?
         public let type: NoteType?
         /// Number of dots
         public let dot: Int
         public let accidental: Accidental?
         public let timeModification: TimeModification?
-        public let stem: VerticalDirection?
+        public let stem: MusicXMLDocument.Measure.VerticalDirection?
+        /// 1 referring to the top-most staff
         public let staff: Int?
         /// Number of beams
         public let beams: [Beam]
 
 
-        /// Returns `nil` when self does not produce a sound.
-        init?(element: AEXMLElement) throws(ParseError) {
-            guard !element.hasChild(named: "rest") else { return nil }
+        init(id: Int, element: AEXMLElement) throws(ParseError) {
+            self.id = id
             self.isChord = element.hasChild(named: "chord")
-            self.pitch = try element.withChild(named: "pitch", Pitch.init)
+            self.pitch = try element.withOptionalChild(named: "pitch", Pitch.init)
             self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
 
-            var tie: [StartStop] = []
+            var tie: [MusicXMLDocument.Measure.StartStop] = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
                 try tie.append(child.attribute(named: "type"))
             }
@@ -73,6 +76,19 @@ extension MusicXMLDocument {
                 self.normal = try element.withChild(named: "normal-notes", AEXMLElement.asIntContainer)
             }
         }
+        
+        public enum Accidental: String, CaseIterable {
+            case sharp
+            case natural
+            case flat
+            case doubleSharp = "double-sharp"
+            case doubleFlat = "double-flat"
+            case sharpSharp = "sharp-sharp"
+            case flatFlat = "flat-flat"
+            case naturalSharp = "natural-sharp"
+            case naturalFlat = "natural-flat"
+        }
+
 
     }
 
@@ -82,7 +98,7 @@ extension MusicXMLDocument {
 extension MusicXMLDocument.Note: DetailedStringConvertible {
 
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note>) -> any DescriptionBlockProtocol {
-        descriptor.container(self.pitch.description) {
+        descriptor.container(self.pitch?.description ?? "rest") {
             if self.isChord {
                 descriptor.constant("chord")
             }

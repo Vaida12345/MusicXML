@@ -17,7 +17,7 @@ public struct MusicXMLDocument {
     public let partList: PartList
     public let parts: [Part]
 
-    init(data: Data) throws {
+    public init(data: Data) throws {
         let document: AEXMLDocument
 
         if Array(data[0..<2]) == [Character("P").asciiValue!, Character("K").asciiValue!] {
