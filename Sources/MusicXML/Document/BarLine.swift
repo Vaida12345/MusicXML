@@ -27,15 +27,14 @@ extension MusicXMLDocument.Measure {
 
 
         public struct Ending {
-            let content: String?
-            let number: String
-            let type: StartStopDiscontinue
+            /// Indicates which times the ending is played, similar to the time-only attribute used by other elements.
+            public let number: [Int]
+            public let type: StartStopDiscontinue
 
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "ending")
 
-                self.content = try? element.asTextContainer()
-                self.number = try element.attribute(named: "number")
+                self.number = try element.attribute(named: "number").split(separator: ",").map({ Int($0)! })
                 self.type = try element.attribute(named: "type")
             }
 
