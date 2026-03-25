@@ -37,7 +37,7 @@ extension AEXMLElement {
 
     func asIntContainer() throws(ParseError) -> Int {
         let string = try self.asTextContainer()
-        guard let value = Int(string) else { throw ParseError.typeMismatch(expected: "Int", actual: "String") }
+        guard let value = Int(string) else { throw ParseError.typeMismatch(expected: "Int", actual: "String (\(string))") }
         return value
     }
 
@@ -84,9 +84,21 @@ extension AEXMLElement {
     }
 
     /// Expected child as an element.
+    @_disfavoredOverload
     func withOptionalChild<T>(named name: String, _ body: (AEXMLElement) throws(ParseError) -> T) throws(ParseError) -> T? {
         guard let child = self.children.first(where: { $0.name == name }) else { return nil }
 
+        do {
+            return try body(child)
+        } catch {
+            throw .childNodeError(name: name, error: error)
+        }
+    }
+    
+    /// Expected child as an element.
+    func withOptionalChild<T>(named name: String, _ body: (AEXMLElement) throws(ParseError) -> T?) throws(ParseError) -> T? {
+        guard let child = self.children.first(where: { $0.name == name }) else { return nil }
+        
         do {
             return try body(child)
         } catch {

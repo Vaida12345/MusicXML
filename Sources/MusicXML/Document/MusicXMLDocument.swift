@@ -13,6 +13,7 @@ import Essentials
 
 public struct MusicXMLDocument {
 
+    public let layout: Layout
     public let version: String?
     public let partList: PartList
     public let parts: [Part]
@@ -35,6 +36,7 @@ public struct MusicXMLDocument {
             try parts.append(Part(element: child))
         }
         self.parts = parts
+        self.layout = try Layout(root: root)
     }
 }
 
@@ -49,6 +51,7 @@ extension MusicXMLDocument: DetailedStringConvertible {
 
         return descriptor.container(title) {
             descriptor.value(for: \.partList)
+            descriptor.value(for: \.layout)
             descriptor.value(for: \.parts)
                 .hideIndex()
         }
