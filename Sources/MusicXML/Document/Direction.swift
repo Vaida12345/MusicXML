@@ -115,7 +115,7 @@ extension MusicXMLDocument.Measure {
         }
         
         public struct OctaveShift {
-            public let phrase: StartStopContinue
+            public let phase: StartStopContinue
             /// Positive for up, negative for down. for example, 1 means 8va.
             ///
             /// If `nil`, use previous value.
@@ -129,19 +129,19 @@ extension MusicXMLDocument.Measure {
                 let type: String = try element.attribute(named: "type")
                 
                 var signum: Int? = nil
-                let phrase: StartStopContinue
+                let phase: StartStopContinue
                 
                 switch type {
                 case "up":
-                    phrase = .start
+                    phase = .start
                     signum = 1
                 case "down":
-                    phrase = .start
+                    phase = .start
                     signum = -1
                 case "stop":
-                    phrase = .stop
+                    phase = .stop
                 case "continue":
-                    phrase = .continue
+                    phase = .continue
                 default:
                     throw ParseError.invalidValue(actual: type, acceptableValues: ["up", "down", "stop", "continue"])
                 }
@@ -155,7 +155,7 @@ extension MusicXMLDocument.Measure {
                 default: shift = 1
                 }
                 
-                self.phrase = phrase
+                self.phase = phase
                 self.shift = signum.map({ $0 * shift })
                 
                 self.number = try? element.attribute(named: "number")
