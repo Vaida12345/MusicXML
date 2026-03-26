@@ -90,3 +90,11 @@ let text = """
     let data = try Data(contentsOf: source)
     _ = try MusicXMLDocument(data: data)
 }
+
+
+@Test func single() async throws {
+    let source = URL(filePath: "/Users/vaida/Desktop/single.musicxml")
+    let data = try Data(contentsOf: source)
+    let document = try MusicXMLDocument(data: data)
+    print(document)
+}

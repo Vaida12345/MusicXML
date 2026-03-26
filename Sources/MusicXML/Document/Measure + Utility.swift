@@ -27,13 +27,13 @@ extension MusicXMLDocument.Measure {
             switch content {
             case .note(let note):
                 if note.isChord {
-                    localTime -= note.duration
+                    localTime -= note.duration ?? 0
                 }
                 
                 if note.pitch != nil {
                     results[note.id] = localTime
                 }
-                localTime += note.duration
+                localTime += note.duration ?? 0
                 
             case .backup(let duration):
                 localTime -= duration

@@ -15,11 +15,13 @@ extension MusicXMLDocument {
     public struct Note: Identifiable {
         /// Unique identifier for this note, assigned by this package. This is the offset of this content in measure.
         public let id: Int
+        public let isGrace: Bool
         /// Whether this note should be connected with the previous one to form a chord.
         public let isChord: Bool
         /// If `nil`, this is a rest.
         public let pitch: Pitch?
-        public let duration: Int
+        /// Grace notes don't have duration.
+        public let duration: Int?
         public let ties: [MusicXMLDocument.Measure.StartStop]
         public let voice: Int?
         public let type: NoteType?
@@ -37,8 +39,13 @@ extension MusicXMLDocument {
         init(id: Int, element: AEXMLElement) throws(ParseError) {
             self.id = id
             self.isChord = element.hasChild(named: "chord")
+            self.isGrace = element.hasChild(named: "grace")
             self.pitch = try element.withOptionalChild(named: "pitch", Pitch.init)
-            self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
+            if !self.isGrace {
+                self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
+            } else {
+                self.duration = nil
+            }
 
             var tie: [MusicXMLDocument.Measure.StartStop] = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
@@ -102,7 +109,10 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
             if self.isChord {
                 descriptor.constant("chord")
             }
-            descriptor.value(for: \.duration)
+            if self.isGrace {
+                descriptor.constant("grace")
+            }
+            descriptor.optional(for: \.duration)
             descriptor.value(for: \.ties)
                 .serialized()
             descriptor.optional(for: \.voice)
