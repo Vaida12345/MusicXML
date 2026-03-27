@@ -14,6 +14,7 @@ import MacroCollection
 extension MusicXMLDocument.Measure {
 
     public struct Direction {
+        
         public let contents: [Content]
         public let sound: Sound?
         /// Staff values are numbers, with 1 referring to the top-most staff in a part.
@@ -51,6 +52,11 @@ extension MusicXMLDocument.Measure {
             self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
         }
 
+        public init(contents: [MusicXMLDocument.Measure.Direction.Content], sound: MusicXMLDocument.Measure.Direction.Sound? = nil, staff: Int? = nil) {
+            self.contents = contents
+            self.sound = sound
+            self.staff = staff
+        }
         
 
         public struct Metronome {
@@ -102,6 +108,12 @@ extension MusicXMLDocument.Measure {
                 } else {
                     self.rhs = nil
                 }
+            }
+            
+            public init(beatUnit: MusicXMLDocument.Note.NoteType, dots: Int, rhs: MusicXMLDocument.Measure.Direction.Metronome.RHS? = nil) {
+                self.beatUnit = beatUnit
+                self.dots = dots
+                self.rhs = rhs
             }
         }
         

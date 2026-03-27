@@ -15,7 +15,7 @@ extension MusicXMLDocument {
 
     /// Includes the basic musical data
     public struct Measure {
-
+        
         /// The attribute that identifies the measure.
         public let number: String
 
@@ -67,6 +67,12 @@ extension MusicXMLDocument {
             self.contents = contents
 
             self.attributes = try element.withOptionalChild(named: "attributes", Attributes.init)
+        }
+        
+        public init(number: String, attributes: MusicXMLDocument.Measure.Attributes? = nil, contents: [MusicXMLDocument.Measure.Content]) {
+            self.number = number
+            self.attributes = attributes
+            self.contents = contents
         }
 
         @accessingAssociatedValues

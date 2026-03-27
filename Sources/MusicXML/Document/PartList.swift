@@ -13,7 +13,7 @@ import DetailedDescription
 extension MusicXMLDocument {
 
     public struct PartList: RandomAccessCollection {
-
+        
         private let scores: [Element]
 
         public var startIndex: Int { self.scores.startIndex }
@@ -27,8 +27,13 @@ extension MusicXMLDocument {
             }
             self.scores = scores
         }
+        
+        public init(scores: [MusicXMLDocument.PartList.Element]) {
+            self.scores = scores
+        }
 
         public struct Element {
+           
             public let id: String
             public let name: String
             public let instrument: String?
@@ -40,6 +45,12 @@ extension MusicXMLDocument {
                 self.instrument = try element.withOptionalChild(named: "score-instrument") { (child) throws(ParseError) in
                     try child.withChild(named: "instrument-name", AEXMLElement.asTextContainer)
                 }
+            }
+            
+            public init(id: String, name: String, instrument: String? = nil) {
+                self.id = id
+                self.name = name
+                self.instrument = instrument
             }
         }
     }

@@ -7,16 +7,26 @@
 
 import Foundation
 import AEXML
+import MacroCollection
 
 
-indirect enum ParseError: Error {
+@accessingAssociatedValues
+public indirect enum ParseError: Error, Hashable {
+    case childNodeError(name: String, error: ParseError)
+    case attributeError(name: String, error: ParseError)
     case typeMismatch(expected: String, actual: String)
     case noSuchChild(name: String)
     case noSuchAttribute(name: String)
-    case childNodeError(name: String, error: ParseError)
-    case attributeError(name: String, error: ParseError)
     case invalidChildCount(expected: Int, actual: Int)
     case invalidValue(actual: String, acceptableValues: [String])
+    
+    public var nature: ParseError {
+        switch self {
+        case .childNodeError(_, let error): error.nature
+        case .attributeError(_, let error): error.nature
+        default: self
+        }
+    }
 }
 
 
@@ -55,10 +65,7 @@ extension AEXMLElement {
 
     /// `<part-name>Piano</part-name>`
     func asTextContainer() throws(ParseError) -> String {
-        guard let value = self.value else {
-            throw .typeMismatch(expected: "String", actual: "nil")
-        }
-        return value
+        self.value ?? ""
     }
 
     func child(named name: String) throws(ParseError) -> AEXMLElement {

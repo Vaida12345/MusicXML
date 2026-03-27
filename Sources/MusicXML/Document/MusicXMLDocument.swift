@@ -12,7 +12,7 @@ import Essentials
 
 
 public struct MusicXMLDocument {
-
+    
     public let layout: Layout
     public let version: String?
     public let partList: PartList
@@ -37,6 +37,13 @@ public struct MusicXMLDocument {
         }
         self.parts = parts
         self.layout = try Layout(root: root)
+    }
+    
+    public init(layout: MusicXMLDocument.Layout, version: String? = nil, partList: MusicXMLDocument.PartList, parts: [MusicXMLDocument.Part]) {
+        self.layout = layout
+        self.version = version
+        self.partList = partList
+        self.parts = parts
     }
 }
 

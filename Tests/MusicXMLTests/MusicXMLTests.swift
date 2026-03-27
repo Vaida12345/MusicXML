@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import FinderItem
-@testable import MusicXML
+import MusicXML
 
 let text = """
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -127,4 +127,38 @@ let text = """
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
     print(document)
+}
+
+@Test func testDataSet() async throws {
+    
+    var errorNatures: Set<ParseError> = []
+    
+    for source in try FinderItem(at: "/Volumes/Vaida's T9/Machine Learning/Dataset/PDMX/mxl").children(range: .enumeration.noOrder) {
+        guard source.isFile, source.extension == "mxl" else { continue }
+        try autoreleasepool {
+            let data = try source.load(.data)
+            
+            do {
+                _ = try MusicXMLDocument(data: data)
+            } catch let error as ParseError {
+                let nature = error.nature
+                if nature.as(.invalidValue)?.acceptableValues == ["G", "F"] {
+                    // unknown clef, ignore
+                    return
+                } else {
+                    if nature.is(.invalidValue) {
+                        if errorNatures.insert(nature).inserted {
+                            print(nature)
+                        }
+                    } else {
+                        if errorNatures.insert(error).inserted {
+                            print(error)
+                        }
+                    }
+                }
+            } catch {
+                print("other error: \(error)")
+            }
+        }
+    }
 }

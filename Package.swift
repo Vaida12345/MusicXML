@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/Vaida12345/Essentials.git", from: "1.0.0"),
         .package(url: "https://github.com/Vaida12345/DetailedDescription.git", from: "2.1.0"),
         .package(url: "https://github.com/Vaida12345/MacroCollection.git", from: "1.0.0"),
-        .package(url: "https://github.com/Vaida12345/FinderItem.git", from: "1.0.0"),
+        .package(url: "https://github.com/Vaida12345/FinderItem.git", from: "1.2.7"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.0"),
         .package(url: "https://github.com/tadija/AEXML.git", from: "4.7.0")
     ],

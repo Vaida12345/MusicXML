@@ -19,7 +19,7 @@ extension MusicXMLDocument.Measure {
      */
 
     /// - Returns: onset of each non-rest note (`Note`) in local time (this measure) in divisions.
-    public func makeNoteEventPositions() -> (totalTime: Int, mapping: [Int : Int]) {
+    public func makeNoteEventPositions(ignoreTies: Bool) -> (totalTime: Int, mapping: [Int : Int]) {
         var localTime: Int = 0
         var results: [Int : Int] = [:]
         
@@ -30,7 +30,7 @@ extension MusicXMLDocument.Measure {
                     localTime -= note.duration ?? 0
                 }
                 
-                if note.pitch != nil {
+                if note.pitch != nil, !(ignoreTies && note.ties.contains(.stop)) {
                     results[note.id] = localTime
                 }
                 localTime += note.duration ?? 0

@@ -13,7 +13,7 @@ import DetailedDescription
 extension MusicXMLDocument {
 
     public struct Part {
-
+        
         public let id: String
         public let measures: [Measure]
 
@@ -26,6 +26,11 @@ extension MusicXMLDocument {
             try element.forEachChild(named: "measure") { (child) throws(ParseError) in
                 try measures.append(Measure(element: child))
             }
+            self.measures = measures
+        }
+        
+        public init(id: String, measures: [MusicXMLDocument.Measure]) {
+            self.id = id
             self.measures = measures
         }
 

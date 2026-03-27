@@ -22,6 +22,10 @@ extension MusicXMLDocument {
             }
         }
         
+        public init(pageWidth: Double? = nil) {
+            self.pageWidth = pageWidth
+        }
+        
     }
     
 }

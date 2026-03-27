@@ -13,6 +13,7 @@ import DetailedDescription
 extension MusicXMLDocument {
 
     public struct Note: Identifiable {
+        
         /// Unique identifier for this note, assigned by this package. This is the offset of this content in measure.
         public let id: Int
         public let grace: Grace?
@@ -71,12 +72,32 @@ extension MusicXMLDocument {
             self.notations = try element.withOptionalChild(named: "notations", Notations.init)
         }
         
+        /// - Parameter id: This should be the offset of this content in measure.
+        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop>, voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam], notations: MusicXMLDocument.Note.Notations? = nil) {
+            self.id = id
+            self.grace = grace
+            self.isChord = isChord
+            self.pitch = pitch
+            self.duration = duration
+            self.ties = ties
+            self.voice = voice
+            self.type = type
+            self.dot = dot
+            self.accidental = accidental
+            self.timeModification = timeModification
+            self.stem = stem
+            self.staff = staff
+            self.beams = beams
+            self.notations = notations
+        }
+        
         public enum StemValue: String, CaseIterable {
             case up, down, none, double
         }
 
 
         public struct TimeModification {
+            
             /// Describes how many notes are played in the time usually occupied by ``normal``.
             public let actual: Int
             /// Normal notes count.
@@ -86,6 +107,11 @@ extension MusicXMLDocument {
                 assert(element.name == "time-modification")
                 self.actual = try element.withChild(named: "actual-notes", AEXMLElement.asIntContainer)
                 self.normal = try element.withChild(named: "normal-notes", AEXMLElement.asIntContainer)
+            }
+            
+            public init(actual: Int, normal: Int) {
+                self.actual = actual
+                self.normal = normal
             }
         }
         
@@ -99,6 +125,18 @@ extension MusicXMLDocument {
             case flatFlat = "flat-flat"
             case naturalSharp = "natural-sharp"
             case naturalFlat = "natural-flat"
+            case quarterFlat = "quarter-flat"
+            case quarterSharp = "quarter-sharp"
+            case sharpUp = "sharp-up"
+            case sharpDown = "sharp-down"
+            case naturalUp = "natural-up"
+            case naturalDown = "natural-down"
+            case flatUp = "flat-up"
+            case flatDown = "flat-down"
+            case arrowUp = "arrow-up"
+            case arrowDown = "arrow-down"
+            case slashSharp = "slash-sharp"
+            case slashFlat = "slash-flat"
         }
         
         public struct Grace: Sendable, Hashable {
@@ -115,6 +153,7 @@ extension MusicXMLDocument {
         }
         
         public struct Notations: DetailedStringConvertible {
+            
             public let arpeggiate: Arpeggiate?
             public let glissando: Glissando?
             
@@ -125,7 +164,13 @@ extension MusicXMLDocument {
                 self.glissando = try element.withOptionalChild(named: "glissando", Glissando.init)
             }
             
+            public init(arpeggiate: MusicXMLDocument.Note.Notations.Arpeggiate? = nil, glissando: MusicXMLDocument.Note.Notations.Glissando? = nil) {
+                self.arpeggiate = arpeggiate
+                self.glissando = glissando
+            }
+            
             public struct Arpeggiate {
+                
                 /// Identifier.
                 public let number: Int?
                 
@@ -134,9 +179,14 @@ extension MusicXMLDocument {
                     
                     self.number = try? element.attribute(named: "number")
                 }
+                
+                public init(number: Int? = nil) {
+                    self.number = number
+                }
             }
             
             public struct Glissando {
+                
                 public let type: MusicXMLDocument.Measure.StartStop
                 /// Distinguishes multiple glissandos when they overlap in MusicXML document order. 
                 public let number: Int?
@@ -146,6 +196,11 @@ extension MusicXMLDocument {
                     
                     self.type = try element.attribute(named: "type", as: MusicXMLDocument.Measure.StartStop.self)
                     self.number = try? element.attribute(named: "number")
+                }
+                
+                public init(type: MusicXMLDocument.Measure.StartStop, number: Int? = nil) {
+                    self.type = type
+                    self.number = number
                 }
             }
             

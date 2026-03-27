@@ -13,7 +13,7 @@ import DetailedDescription
 extension MusicXMLDocument.Measure {
 
     public struct Attributes {
-
+        
         public let divisions: Int?
         public let keySignature: KeySignature?
         public let timeSignature: TimeSignature?
@@ -31,6 +31,14 @@ extension MusicXMLDocument.Measure {
             self.staves = try element.withOptionalChild(named: "staves", AEXMLElement.asIntContainer)
 
             self.clef = try element.withOptionalChild(named: "clef", Clef.init)
+        }
+        
+        public init(divisions: Int? = nil, keySignature: MusicXMLDocument.Measure.Attributes.KeySignature? = nil, timeSignature: MusicXMLDocument.Measure.Attributes.TimeSignature? = nil, staves: Int? = nil, clef: MusicXMLDocument.Measure.Attributes.Clef? = nil) {
+            self.divisions = divisions
+            self.keySignature = keySignature
+            self.timeSignature = timeSignature
+            self.staves = staves
+            self.clef = clef
         }
 
     }
@@ -116,7 +124,7 @@ extension MusicXMLDocument.Measure.Attributes {
         }
 
         public enum Mode: String, CaseIterable, Equatable {
-            case major, minor
+            case major, minor, dorian, phrygian, lydian, mixolydian, aeolian, ionian, locrian, none
         }
     }
 
@@ -131,8 +139,24 @@ extension MusicXMLDocument.Measure.Attributes {
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "time")
 
-            self.beats = try element.withChild(named: "beats", AEXMLElement.asIntContainer)
+            self.beats = try element.withChild(named: "beats") { (beats) throws(ParseError) in
+                if let beats = try? beats.asIntContainer() {
+                    return beats
+                } else if let string = beats.value {
+                    let ints = string.split(separator: "+").map({ Int($0.trimmingCharacters(in: .whitespacesAndNewlines)) })
+                    if ints.allSatisfy({ $0 != nil }) {
+                        return ints.reduce(0, { $0 + $1! })
+                    }
+                }
+                
+                throw ParseError.typeMismatch(expected: "String,[Int]", actual: beats.string)
+            }
             self.beatType = try element.withChild(named: "beat-type", AEXMLElement.asIntContainer)
+        }
+        
+        public init(beats: Int, beatType: Int) {
+            self.beats = beats
+            self.beatType = beatType
         }
     }
 
@@ -168,7 +192,7 @@ extension MusicXMLDocument.Measure.Attributes: DetailedStringConvertible {
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Measure.Attributes>) -> any DescriptionBlockProtocol {
         descriptor.container {
             descriptor.optional(for: \.divisions)
-            if keySignature != .none {
+            if keySignature != MusicXMLDocument.Measure.Attributes.KeySignature.none {
                 descriptor.value("keySignature", of: keySignature)
             }
             descriptor.optional(for: \.staves)
