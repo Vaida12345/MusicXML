@@ -15,7 +15,7 @@ extension MusicXMLDocument {
     public struct Note: Identifiable {
         /// Unique identifier for this note, assigned by this package. This is the offset of this content in measure.
         public let id: Int
-        public let isGrace: Bool
+        public let grace: Grace?
         /// Whether this note should be connected with the previous one to form a chord.
         public let isChord: Bool
         /// If `nil`, this is a rest.
@@ -34,14 +34,15 @@ extension MusicXMLDocument {
         public let staff: Int?
         /// Number of beams
         public let beams: [Beam]
+        public let notations: Notations?
 
 
         init(id: Int, element: AEXMLElement) throws(ParseError) {
             self.id = id
             self.isChord = element.hasChild(named: "chord")
-            self.isGrace = element.hasChild(named: "grace")
+            self.grace = try element.withOptionalChild(named: "grace", Grace.init)
             self.pitch = try element.withOptionalChild(named: "pitch", Pitch.init)
-            if !self.isGrace {
+            if self.grace == nil { // is not grace
                 self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
             } else {
                 self.duration = nil
@@ -67,7 +68,7 @@ extension MusicXMLDocument {
             }
             self.beams = beam
 
-            // notations are ignored.
+            self.notations = try element.withOptionalChild(named: "notations", Notations.init)
         }
 
 
@@ -95,6 +96,40 @@ extension MusicXMLDocument {
             case naturalSharp = "natural-sharp"
             case naturalFlat = "natural-flat"
         }
+        
+        public struct Grace: Sendable, Hashable {
+            public var hasSlash: Bool
+            
+            public init(hasSlash: Bool) {
+                self.hasSlash = hasSlash
+            }
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "grace")
+                self.hasSlash = element.hasChild(named: "slash")
+            }
+        }
+        
+        public struct Notations {
+            public let arpeggiate: Arpeggiate?
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "notations")
+                
+                self.arpeggiate = try element.withOptionalChild(named: "arpeggiate", Arpeggiate.init)
+            }
+            
+            public struct Arpeggiate {
+                /// Identifier.
+                public let number: Int?
+                
+                init(element: AEXMLElement) throws(ParseError) {
+                    assert(element.name == "arpeggiate")
+                    
+                    self.number = try? element.attribute(named: "number")
+                }
+            }
+        }
 
 
     }
@@ -109,9 +144,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
             if self.isChord {
                 descriptor.constant("chord")
             }
-            if self.isGrace {
-                descriptor.constant("grace")
-            }
+            descriptor.optional(for: \.grace)
             descriptor.optional(for: \.duration)
             descriptor.value(for: \.ties)
                 .serialized()
@@ -126,6 +159,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
             descriptor.optional(for: \.staff)
             descriptor.value(for: \.beams)
                 .serialized()
+            descriptor.optional(for: \.notations)
         }
         .hideEmptySequence()
     }

@@ -29,19 +29,17 @@ extension MusicXMLDocument {
         }
 
         public struct Element {
-            public var id: String
-            public var name: String
-
+            public let id: String
+            public let name: String
+            public let instrument: String?
 
             init(element: AEXMLElement) throws(ParseError) {
                 self.id = try element.attribute(named: "id", as: String.self)
-
-                var name: String = ""
-                try element.withChild(named: "part-name") { (child) throws(ParseError) in
-                    name = try child.asTextContainer()
+                
+                self.name = try element.withChild(named: "part-name", AEXMLElement.asTextContainer)
+                self.instrument = try element.withOptionalChild(named: "score-instrument") { (child) throws(ParseError) in
+                    try child.withChild(named: "instrument-name", AEXMLElement.asTextContainer)
                 }
-
-                self.name = name
             }
         }
     }

@@ -81,7 +81,6 @@ let text = """
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Nightfall.musicxml")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
-    print(document)
 }
 
 
@@ -92,8 +91,14 @@ let text = """
 }
 
 
-@Test func single() async throws {
-    let source = URL(filePath: "/Users/vaida/Desktop/single.musicxml")
+@Test func grace() async throws {
+    let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Grace.musicxml")
+    let data = try Data(contentsOf: source)
+    _ = try MusicXMLDocument(data: data)
+}
+
+@Test func arpeggio() async throws {
+    let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Arpeggio.musicxml")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
     print(document)
