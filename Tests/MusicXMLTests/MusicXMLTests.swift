@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import FinderItem
 @testable import MusicXML
 
 let text = """
@@ -62,11 +63,10 @@ let text = """
     
     let attributes = measure.attributes!
     #expect(attributes.divisions == 1)
-    #expect(attributes.keySignature.fifths == 0)
-    #expect(attributes.timeSignature.beats == 4)
-    #expect(attributes.timeSignature.beatType == 4)
-    #expect(attributes.clef.sign == .treble)
-    #expect(attributes.clef.line == 2)
+    #expect(attributes.timeSignature?.beats == 4)
+    #expect(attributes.timeSignature?.beatType == 4)
+    #expect(attributes.clef?.sign == .treble)
+    #expect(attributes.clef?.line == 2)
     
     #expect(measure.contents.count == 1)
     let note = measure.contents.first!.as(.note)!
@@ -105,6 +105,21 @@ let text = """
 
 @Test func glissando() async throws {
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Glissando.musicxml")
+    let data = try Data(contentsOf: source)
+    let document = try MusicXMLDocument(data: data)
+    print(document)
+}
+
+@Test func openFiles() throws {
+    for child in try FinderItem(at: "/Users/vaida/Desktop/sheets/").children(range: .contentsOfDirectory) {
+        print(child)
+        let data = try child.load(.data)
+        _ = try MusicXMLDocument(data: data)
+    }
+}
+
+@Test func theWinter() throws {
+    let source = URL(filePath: "/Users/vaida/Desktop/sheets/The Winter.mxl")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
     print(document)

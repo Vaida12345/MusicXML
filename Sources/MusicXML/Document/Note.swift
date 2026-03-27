@@ -29,7 +29,7 @@ extension MusicXMLDocument {
         public let dot: Int
         public let accidental: Accidental?
         public let timeModification: TimeModification?
-        public let stem: MusicXMLDocument.Measure.VerticalDirection?
+        public let stem: StemValue?
         /// 1 referring to the top-most staff
         public let staff: Int?
         /// Number of beams
@@ -69,6 +69,10 @@ extension MusicXMLDocument {
             self.beams = beam
 
             self.notations = try element.withOptionalChild(named: "notations", Notations.init)
+        }
+        
+        public enum StemValue: String, CaseIterable {
+            case up, down, none, double
         }
 
 

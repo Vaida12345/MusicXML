@@ -15,22 +15,22 @@ extension MusicXMLDocument.Measure {
     public struct Attributes {
 
         public let divisions: Int?
-        public let keySignature: KeySignature
-        public let timeSignature: TimeSignature
+        public let keySignature: KeySignature?
+        public let timeSignature: TimeSignature?
         public let staves: Int?
-        public let clef: Clef
+        public let clef: Clef?
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "attributes")
 
             self.divisions = try element.withOptionalChild(named: "divisions", AEXMLElement.asIntContainer)
 
-            self.keySignature = try element.withChild(named: "key", KeySignature.init)
-            self.timeSignature = try element.withChild(named: "time", TimeSignature.init)
+            self.keySignature = try element.withOptionalChild(named: "key", KeySignature.init)
+            self.timeSignature = try element.withOptionalChild(named: "time", TimeSignature.init)
 
             self.staves = try element.withOptionalChild(named: "staves", AEXMLElement.asIntContainer)
 
-            self.clef = try element.withChild(named: "clef", Clef.init)
+            self.clef = try element.withOptionalChild(named: "clef", Clef.init)
         }
 
     }
@@ -44,21 +44,33 @@ extension MusicXMLDocument.Measure.Attributes {
         public let octave: [Int]
         /// Indicates that the old key signature should be cancelled before the new one appears
         public let cancel: Bool
-        /// The number of flats or sharps in a traditional key signature
-        ///
-        /// Negative numbers are used for flats and positive numbers for sharps, reflecting the key's placement within the circle of fifths
-        public let fifths: Int
-        public let mode: Mode?
-
-        static var none: KeySignature {
-            KeySignature(octave: [], cancel: false, fifths: 0, mode: nil)
+        
+        public let value: Value
+        
+        public enum Value: Equatable {
+            /// The number of flats or sharps in a traditional key signature
+            ///
+            /// Negative numbers are used for flats and positive numbers for sharps, reflecting the key's placement within the circle of fifths
+            case traditional(fifths: Int, mode: Mode?)
+            
+            case nonTraditional([NonTraditionalValue])
+            
+            case none
+            
+            public struct NonTraditionalValue: Equatable {
+                public let step: MusicXMLDocument.Note.Pitch.Step
+                public let alter: Double
+            }
         }
 
-        init(octave: [Int], cancel: Bool, fifths: Int, mode: Mode?) {
+        static var none: KeySignature {
+            KeySignature(octave: [], cancel: false, value: .none)
+        }
+
+        init(octave: [Int], cancel: Bool, value: Value) {
             self.octave = octave
             self.cancel = cancel
-            self.fifths = fifths
-            self.mode = mode
+            self.value = .none
         }
 
         init(element: AEXMLElement) throws(ParseError) {
@@ -71,8 +83,36 @@ extension MusicXMLDocument.Measure.Attributes {
             self.octave = octave
 
             self.cancel = element.hasChild(named: "cancel")
-            self.fifths = try element.withChild(named: "fifths", AEXMLElement.asIntContainer)
-            self.mode = try element.withOptionalChild(named: "mode", AEXMLElement.asEnumContainer)
+            
+            if let fifths = try element.withOptionalChild(named: "fifths", AEXMLElement.asIntContainer) {
+                if fifths == 0 {
+                    self.value = .none
+                } else {
+                    let mode: Mode? = try element.withOptionalChild(named: "mode", AEXMLElement.asEnumContainer)
+                    self.value = .traditional(fifths: fifths, mode: mode)
+                }
+            } else {
+                var step: MusicXMLDocument.Note.Pitch.Step?
+                
+                var values: [Value.NonTraditionalValue] = []
+                for child in element.children {
+                    guard let value = child.value else { continue }
+                    if child.name == "key-step" {
+                        guard let _step = MusicXMLDocument.Note.Pitch.Step(rawValue: value) else { throw .invalidValue(actual: value, acceptableValues: MusicXMLDocument.Note.Pitch.Step.allCases.map(\.rawValue)) }
+                        step = _step
+                    } else if child.name == "key-alter" {
+                        guard let step else { continue }
+                        guard let alter = Double(value) else { throw .typeMismatch(expected: "Double", actual: "String") }
+                        values.append(Value.NonTraditionalValue(step: step, alter: alter))
+                    }
+                }
+                
+                if values.isEmpty {
+                    self.value = .none
+                } else {
+                    self.value = .nonTraditional(values)
+                }
+            }
         }
 
         public enum Mode: String, CaseIterable, Equatable {

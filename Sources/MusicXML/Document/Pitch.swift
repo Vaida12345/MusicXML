@@ -51,10 +51,10 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public enum Step: String, CaseIterable {
+        public enum Step: String, CaseIterable, Hashable, Equatable {
             case A, B, C, D, E, F, G
             
-            var offset: Int {
+            public var offset: Int {
                 switch self {
                 case .C: return 0
                 case .D: return 2
