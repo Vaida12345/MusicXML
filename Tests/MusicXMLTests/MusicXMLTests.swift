@@ -107,12 +107,10 @@ let text = """
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Glissando.musicxml")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
-    print(document)
 }
 
 @Test func openFiles() throws {
     for child in try FinderItem(at: "/Users/vaida/Desktop/sheets/").children(range: .contentsOfDirectory) {
-        print(child)
         let data = try child.load(.data)
         _ = try MusicXMLDocument(data: data)
     }
@@ -120,6 +118,12 @@ let text = """
 
 @Test func theWinter() throws {
     let source = URL(filePath: "/Users/vaida/Desktop/sheets/The Winter.mxl")
+    let data = try Data(contentsOf: source)
+    let document = try MusicXMLDocument(data: data)
+}
+
+@Test func ballade() throws {
+    let source = URL(filePath: "/Users/vaida/Desktop/sheets/Ballade No. 1 in G minor, Op. 23.mxl")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
     print(document)

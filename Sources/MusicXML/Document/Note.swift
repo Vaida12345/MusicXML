@@ -22,7 +22,7 @@ extension MusicXMLDocument {
         public let pitch: Pitch?
         /// Grace notes don't have duration.
         public let duration: Int?
-        public let ties: [MusicXMLDocument.Measure.StartStop]
+        public let ties: Set<MusicXMLDocument.Measure.StartStop>
         public let voice: Int?
         public let type: NoteType?
         /// Number of dots
@@ -48,9 +48,9 @@ extension MusicXMLDocument {
                 self.duration = nil
             }
 
-            var tie: [MusicXMLDocument.Measure.StartStop] = []
+            var tie: Set<MusicXMLDocument.Measure.StartStop> = []
             try element.forEachChild(named: "tie") { (child) throws(ParseError) in
-                try tie.append(child.attribute(named: "type"))
+                try tie.insert(child.attribute(named: "type"))
             }
             self.ties = tie
 
