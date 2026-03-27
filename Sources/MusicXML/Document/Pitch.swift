@@ -32,6 +32,24 @@ extension MusicXMLDocument.Note {
             self.alteration = try element.withOptionalChild(named: "alter", AEXMLElement.asDoubleContainer)
             self.octave = try element.withChild(named: "octave", AEXMLElement.asIntContainer)
         }
+        
+        public func nextWhiteNote() -> Pitch {
+            if let next = step.next {
+                // same octave
+                return Pitch(step: next, alteration: nil, octave: self.octave)
+            } else {
+                return Pitch(step: .C, alteration: nil, octave: self.octave + 1)
+            }
+        }
+        
+        public func previousWhiteNote() -> Pitch {
+            if let previous = step.previous {
+                // same octave
+                return Pitch(step: previous, alteration: nil, octave: self.octave)
+            } else {
+                return Pitch(step: .B, alteration: nil, octave: self.octave - 1)
+            }
+        }
 
         public enum Step: String, CaseIterable {
             case A, B, C, D, E, F, G
@@ -45,6 +63,30 @@ extension MusicXMLDocument.Note {
                 case .G: return 7
                 case .A: return 9
                 case .B: return 11
+                }
+            }
+            
+            var next: Step? {
+                switch self {
+                case .C: .D
+                case .D: .E
+                case .E: .F
+                case .F: .G
+                case .G: .A
+                case .A: .B
+                case .B: nil
+                }
+            }
+            
+            var previous: Step? {
+                switch self {
+                case .C: nil
+                case .B: .A
+                case .A: .G
+                case .G: .F
+                case .F: .E
+                case .E: .D
+                case .D: .C
                 }
             }
         }

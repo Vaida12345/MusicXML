@@ -100,6 +100,12 @@ let text = """
 @Test func arpeggio() async throws {
     let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Arpeggio.musicxml")
     let data = try Data(contentsOf: source)
+    _ = try MusicXMLDocument(data: data)
+}
+
+@Test func glissando() async throws {
+    let source = URL(filePath: "/Users/vaida/DataBase/Swift Package/Test Reference/MusicXML/Glissando.musicxml")
+    let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
     print(document)
 }

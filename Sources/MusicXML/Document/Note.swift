@@ -110,13 +110,15 @@ extension MusicXMLDocument {
             }
         }
         
-        public struct Notations {
+        public struct Notations: DetailedStringConvertible {
             public let arpeggiate: Arpeggiate?
+            public let glissando: Glissando?
             
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "notations")
                 
                 self.arpeggiate = try element.withOptionalChild(named: "arpeggiate", Arpeggiate.init)
+                self.glissando = try element.withOptionalChild(named: "glissando", Glissando.init)
             }
             
             public struct Arpeggiate {
@@ -127,6 +129,26 @@ extension MusicXMLDocument {
                     assert(element.name == "arpeggiate")
                     
                     self.number = try? element.attribute(named: "number")
+                }
+            }
+            
+            public struct Glissando {
+                public let type: MusicXMLDocument.Measure.StartStop
+                /// Distinguishes multiple glissandos when they overlap in MusicXML document order. 
+                public let number: Int?
+                
+                init(element: AEXMLElement) throws(ParseError) {
+                    assert(element.name == "glissando")
+                    
+                    self.type = try element.attribute(named: "type", as: MusicXMLDocument.Measure.StartStop.self)
+                    self.number = try? element.attribute(named: "number")
+                }
+            }
+            
+            public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note.Notations>) -> any DescriptionBlockProtocol {
+                descriptor.container {
+                    descriptor.optional(for: \.arpeggiate)
+                    descriptor.optional(for: \.glissando)
                 }
             }
         }
