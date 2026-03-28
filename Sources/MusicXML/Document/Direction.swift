@@ -24,6 +24,9 @@ extension MusicXMLDocument.Measure {
         public enum Content {
             case metronome(Metronome)
             case octaveShift(OctaveShift)
+            /// Represents crescendo and diminuendo wedge symbols.
+            case wedge(Wedge)
+            case dynamics(Dynamics)
             case unknown(String)
         }
 
@@ -32,7 +35,7 @@ extension MusicXMLDocument.Measure {
             
             var contents: [Content] = []
             for child in element.children where child.name == "direction-type" {
-                guard let firstChild = child.children.first else { continue }
+                guard let firstChild = child.children.first else { continue } // exactly one, so first child.
                 
                 switch firstChild.name {
                 case "metronome":
@@ -42,6 +45,14 @@ extension MusicXMLDocument.Measure {
                 case "octave-shift":
                     let octaveShift = try OctaveShift(element: firstChild)
                     contents.append(.octaveShift(octaveShift))
+                    
+                case "wedge":
+                    let wedge = try Wedge(element: firstChild)
+                    contents.append(.wedge(wedge))
+                    
+                case "dynamics":
+                    let dynamics = try Dynamics(element: firstChild)
+                    contents.append(.dynamics(dynamics))
                     
                 default:
                     contents.append(.unknown(firstChild.name))
@@ -119,10 +130,13 @@ extension MusicXMLDocument.Measure {
         
         public struct Sound {
             public let tempo: Int?
+            /// Aka, velocity
+            public let dynamics: Double?
             
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "sound")
                 self.tempo = try? element.attribute(named: "tempo")
+                self.dynamics = try? element.attribute(named: "dynamics")
             }
         }
         
@@ -173,6 +187,42 @@ extension MusicXMLDocument.Measure {
                 self.number = try? element.attribute(named: "number")
             }
         }
+        
+        public struct Wedge {
+            
+            /// The value is crescendo for the start of a wedge that is closed at the left side, diminuendo for the start of a wedge that is closed on the right side, and stop for the end of a wedge.
+            public let type: WedgeType
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "wedge")
+                
+                self.type = try element.attribute(named: "type")
+            }
+            
+            public init(type: WedgeType) {
+                self.type = type
+            }
+            
+            public enum WedgeType: String, CaseIterable {
+                case crescendo, diminuendo, stop, `continue`
+            }
+            
+        }
+        
+        public struct Dynamics {
+            
+            public let values: [String]
+            
+            init(element: AEXMLElement) throws(ParseError) {
+                assert(element.name == "dynamics")
+                
+                self.values = element.children.map(\.name)
+            }
+            
+            public init(values: [String]) {
+                self.values = values
+            }
+        }
     }
 }
 
@@ -203,6 +253,10 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                     }
                 case .octaveShift(let shift):
                     descriptor.constant("octaveShift(\(shift))")
+                case .wedge(let wedge):
+                    descriptor.constant("wedge(\(wedge))")
+                case .dynamics(let dynamics):
+                    descriptor.constant("dynamics(\(dynamics))")
                 case .unknown(let unknown):
                     descriptor.constant("unknown(\(unknown))")
                 }
