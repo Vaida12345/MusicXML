@@ -120,6 +120,7 @@ let text = """
     let source = URL(filePath: "/Users/vaida/Desktop/sheets/The Winter.mxl")
     let data = try Data(contentsOf: source)
     let document = try MusicXMLDocument(data: data)
+    print(document)
 }
 
 @Test func ballade() throws {

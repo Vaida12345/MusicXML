@@ -27,12 +27,14 @@ extension MusicXMLDocument.Measure {
             /// Represents crescendo and diminuendo wedge symbols.
             case wedge(Wedge)
             case dynamics(Dynamics)
+            case dashes(Dashes)
             case unknown(String)
         }
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "direction")
             
+            var words: AEXMLElement? = nil
             var contents: [Content] = []
             for child in element.children where child.name == "direction-type" {
                 guard let firstChild = child.children.first else { continue } // exactly one, so first child.
@@ -54,10 +56,21 @@ extension MusicXMLDocument.Measure {
                     let dynamics = try Dynamics(element: firstChild)
                     contents.append(.dynamics(dynamics))
                     
+                case "dashes":
+                    guard let dashes = try Dashes(element: firstChild, words: words) else { fallthrough }
+                    contents.append(.dashes(dashes))
+                    
+                case "words":
+                    words = firstChild
+                    continue
+                    
                 default:
                     contents.append(.unknown(firstChild.name))
                 }
+                
+                words = nil
             }
+            
             self.contents = contents
             self.sound = try element.withOptionalChild(named: "sound", Sound.init)
             self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
@@ -223,6 +236,45 @@ extension MusicXMLDocument.Measure {
                 self.values = values
             }
         }
+        
+        public struct Dashes {
+            
+            public let type: StartStopContinue
+            
+            public let value: Value?
+            
+            /// Distinguishes multiple dashes when they overlap in MusicXML document order.
+            public let number: Int?
+            
+            init?(element: AEXMLElement, words: AEXMLElement?) throws(ParseError) {
+                assert(element.name == "dashes")
+                assert(words.isNil(or: { $0.name == "words" }))
+                
+                self.type = try element.attribute(named: "type")
+                self.value = try? words?.asEnumContainer()
+                self.number = try element.attribute(named: "number")
+                
+                if value == nil && type == .start { // read failed
+                    return nil
+                }
+            }
+            
+            public init(type: StartStopContinue, value: Value, number: Int?) {
+                self.type = type
+                self.value = value
+                self.number = number
+            }
+            
+            public enum Value: String, CaseIterable {
+                case cresc = "cresc."
+                case dim = "dim."
+                case rit = "rit."
+                case riten = "riten."
+                case rall = "rall."
+                case accel = "accel."
+            }
+            
+        }
     }
 }
 
@@ -252,11 +304,13 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                         }
                     }
                 case .octaveShift(let shift):
-                    descriptor.constant("octaveShift(\(shift))")
+                    descriptor.constant("\(shift)")
                 case .wedge(let wedge):
-                    descriptor.constant("wedge(\(wedge))")
+                    descriptor.constant("\(wedge)")
                 case .dynamics(let dynamics):
-                    descriptor.constant("dynamics(\(dynamics))")
+                    descriptor.constant("\(dynamics)")
+                case .dashes(let dashes):
+                    descriptor.constant("\(dashes)")
                 case .unknown(let unknown):
                     descriptor.constant("unknown(\(unknown))")
                 }
