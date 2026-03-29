@@ -91,6 +91,7 @@ extension MusicXMLDocument.Note {
             }
         }
         
+        /// This is always truthful in MIDI, as MusicXML step and alteration does not change due to key signatures.
         public var midiPitch: Int {
             let offset = self.step.offset + Int(self.alteration ?? 0)
             return (octave + 1) * 12 + offset
