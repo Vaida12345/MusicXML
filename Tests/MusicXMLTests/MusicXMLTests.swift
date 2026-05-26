@@ -109,56 +109,38 @@ let text = """
     let document = try MusicXMLDocument(data: data)
 }
 
-@Test func openFiles() throws {
-    for child in try FinderItem(at: "/Users/vaida/Desktop/sheets/").children(range: .contentsOfDirectory) {
-        let data = try child.load(.data)
-        _ = try MusicXMLDocument(data: data)
-    }
-}
-
-@Test func theWinter() throws {
-    let source = URL(filePath: "/Users/vaida/Desktop/sheets/The Winter.mxl")
-    let data = try Data(contentsOf: source)
-    let document = try MusicXMLDocument(data: data)
-    print(document)
-}
-
-@Test func ballade() throws {
-    let source = URL(filePath: "/Users/vaida/Desktop/sheets/Ballade No. 1 in G minor, Op. 23.mxl")
-    let data = try Data(contentsOf: source)
-    let document = try MusicXMLDocument(data: data)
-    print(document)
-}
-
 @Test func testDataSet() async throws {
     
-    var errorNatures: Set<ParseError> = []
+    nonisolated(unsafe) var errorNatures: Set<ParseError> = []
     
-    for source in try FinderItem(at: "/Volumes/Vaida's T9/Machine Learning/Dataset/PDMX/mxl").children(range: .enumeration.noOrder) {
-        guard source.isFile, source.extension == "mxl" else { continue }
-        try autoreleasepool {
-            let data = try source.load(.data)
+    await withDiscardingTaskGroup { taskGroup in
+        for source in try! FinderItem(at: "/Volumes/Vaida's T9/Library/Machine Learning/Dataset/PDMX/mxl").children(range: .enumeration.noOrder) {
+            guard source.isFile, source.extension == "mxl" else { continue }
             
-            do {
-                _ = try MusicXMLDocument(data: data)
-            } catch let error as ParseError {
-                let nature = error.nature
-                if nature.as(.invalidValue)?.acceptableValues == ["G", "F"] {
-                    // unknown clef, ignore
-                    return
-                } else {
-                    if nature.is(.invalidValue) {
-                        if errorNatures.insert(nature).inserted {
-                            print(nature)
-                        }
+            taskGroup.addTask {
+                guard let data = try? source.load(.data) else { return }
+                
+                do {
+                    _ = try MusicXMLDocument(data: data)
+                } catch let error as ParseError {
+                    let nature = error.nature
+                    if nature.as(.invalidValue)?.acceptableValues == ["G", "F"] {
+                        // unknown clef, ignore
+                        return
                     } else {
-                        if errorNatures.insert(error).inserted {
-                            print(error)
+                        if nature.is(.invalidValue) {
+                            if errorNatures.insert(nature).inserted {
+                                print(nature)
+                            }
+                        } else {
+                            if errorNatures.insert(error).inserted {
+                                print(error)
+                            }
                         }
                     }
+                } catch {
+                    print("other error: \(error)")
                 }
-            } catch {
-                print("other error: \(error)")
             }
         }
     }

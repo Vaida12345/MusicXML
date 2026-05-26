@@ -19,7 +19,7 @@ extension MusicXMLDocument.Note {
         public let octave: Int
 
         init(step: Step, alteration: Double?, octave: Int) {
-            assert(0...9 ~= octave)
+            precondition(0...9 ~= octave, "octave \(octave) is outside valid range 0...9")
             self.step = step
             self.alteration = alteration
             self.octave = octave

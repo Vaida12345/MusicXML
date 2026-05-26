@@ -27,6 +27,7 @@ extension MusicXMLDocument.Measure {
             switch content {
             case .note(let note):
                 if note.isChord {
+                    assert(note.duration != nil, "Chord note should have a valid duration")
                     localTime -= note.duration ?? 0
                 }
                 

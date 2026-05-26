@@ -64,6 +64,8 @@ extension AEXMLElement {
     }
 
     /// `<part-name>Piano</part-name>`
+    ///
+    /// Return empty string on `nil`
     func asTextContainer() throws(ParseError) -> String {
         self.value ?? ""
     }

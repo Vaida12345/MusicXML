@@ -97,11 +97,13 @@ extension MusicXMLDocument.Measure {
             init(element: AEXMLElement) throws(ParseError) {
                 var iterator = element.children.makeIterator()
                 guard let beatUnitElement = iterator.next() else { throw .invalidChildCount(expected: 1, actual: 0) }
-                do {
-                    guard beatUnitElement.name == "beat-unit" else { throw ParseError.noSuchChild(name: "beat-unit") }
+                guard beatUnitElement.name == "beat-unit" else {
+                    throw .childNodeError(name: "beat-unit", error: .noSuchChild(name: "beat-unit"))
+                }
+                do throws(ParseError) {
                     self.beatUnit = try beatUnitElement.asEnumContainer()
                 } catch {
-                    throw .childNodeError(name: "beat-unit", error: error as! ParseError)
+                    throw .childNodeError(name: "beat-unit", error: error)
                 }
 
                 var dots = 0
@@ -297,7 +299,7 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                                 descriptor.value("per minute", of: int)
                             case .beat(let beatUnit, let dots):
                                 descriptor.value("beatUnit", of: beatUnit)
-                                if metronome.dots != 0 {
+                                if dots != 0 {
                                     descriptor.value("dots", of: dots)
                                 }
                             }

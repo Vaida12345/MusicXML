@@ -78,7 +78,7 @@ extension MusicXMLDocument.Measure.Attributes {
         init(octave: [Int], cancel: Bool, value: Value) {
             self.octave = octave
             self.cancel = cancel
-            self.value = .none
+            self.value = value
         }
 
         init(element: AEXMLElement) throws(ParseError) {

@@ -40,7 +40,15 @@ extension MusicXMLDocument.Measure {
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "ending")
 
-                self.number = try element.attribute(named: "number").split(separator: ",").map({ Int($0.trimmingCharacters(in: .whitespacesAndNewlines))! })
+                var number: [Int] = []
+                for part in try element.attribute(named: "number").split(separator: ",") {
+                    let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let int = Int(trimmed) else {
+                        throw ParseError.typeMismatch(expected: "Int", actual: trimmed)
+                    }
+                    number.append(int)
+                }
+                self.number = number
                 self.type = try element.attribute(named: "type")
             }
             

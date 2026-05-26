@@ -21,7 +21,7 @@ public struct MusicXMLDocument {
     public init(data: Data) throws {
         let document: AEXMLDocument
 
-        if Array(data[0..<2]) == [Character("P").asciiValue!, Character("K").asciiValue!] {
+        if data.starts(with: [0x50, 0x4B]) { // PK (ZIP magic number)
             document = try decodeMXL(data: data)
         } else {
             document = try AEXMLDocument(xml: data)
