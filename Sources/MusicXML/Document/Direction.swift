@@ -306,15 +306,15 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                         }
                     }
                 case .octaveShift(let shift):
-                    descriptor.constant("\(shift)")
+                    descriptor.raw("\(shift)")
                 case .wedge(let wedge):
-                    descriptor.constant("\(wedge)")
+                    descriptor.raw("\(wedge)")
                 case .dynamics(let dynamics):
-                    descriptor.constant("\(dynamics)")
+                    descriptor.raw("\(dynamics)")
                 case .dashes(let dashes):
-                    descriptor.constant("\(dashes)")
+                    descriptor.raw("\(dashes)")
                 case .unknown(let unknown):
-                    descriptor.constant("unknown(\(unknown))")
+                    descriptor.raw("unknown(\(unknown))")
                 }
             }
             descriptor.optional(for: \.sound)

@@ -223,7 +223,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note>) -> any DescriptionBlockProtocol {
         descriptor.container(self.pitch?.description ?? "rest") {
             if self.isChord {
-                descriptor.constant("chord")
+                descriptor.raw("chord")
             }
             descriptor.optional(for: \.grace)
             descriptor.optional(for: \.duration)
