@@ -17,6 +17,9 @@ public struct MusicXMLDocument {
     public let version: String?
     public let partList: PartList
     public let parts: [Part]
+    public let title: String?
+    public let composer: String?
+    public let credits: [Credit]
 
     public init(data: Data) throws {
         let document: AEXMLDocument
@@ -29,6 +32,12 @@ public struct MusicXMLDocument {
         let root = document.root
 
         self.version = root.attributes["version"]
+        self.title = try root.withOptionalChild(named: "work") { (work) throws(ParseError) in
+            try work.withOptionalChild(named: "work-title", AEXMLElement.asTextContainer)
+        }
+        self.composer = root.children.first(where: { $0.name == "identification" })?
+            .children.first(where: { $0.name == "creator" && $0.attributes["type"] == "composer" })?.value
+        self.credits = try root.mapChildren(named: "credit", Credit.init)
         self.partList = try root.withChild(named: "part-list", PartList.init)
 
         var parts: [Part] = []
@@ -39,11 +48,14 @@ public struct MusicXMLDocument {
         self.layout = try Layout(root: root)
     }
     
-    public init(layout: MusicXMLDocument.Layout, version: String? = nil, partList: MusicXMLDocument.PartList, parts: [MusicXMLDocument.Part]) {
+    public init(layout: MusicXMLDocument.Layout = .init(), version: String? = nil, partList: MusicXMLDocument.PartList, parts: [MusicXMLDocument.Part], title: String? = nil, composer: String? = nil, credits: [Credit] = []) {
         self.layout = layout
         self.version = version
         self.partList = partList
         self.parts = parts
+        self.title = title
+        self.composer = composer
+        self.credits = credits
     }
 }
 
@@ -57,6 +69,9 @@ extension MusicXMLDocument: DetailedStringConvertible {
         }
 
         return descriptor.container(title) {
+            descriptor.optional(for: \.title)
+            descriptor.optional(for: \.composer)
+            descriptor.value(for: \.credits)
             descriptor.value(for: \.partList)
             descriptor.value(for: \.layout)
             descriptor.value(for: \.parts)

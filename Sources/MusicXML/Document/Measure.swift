@@ -54,8 +54,8 @@ extension MusicXMLDocument {
                     case "attributes": // will be handled in the following lines.
                         continue
 
-                    case "print": // layout properties, ignore.
-                        continue
+                    case "print":
+                        contents.append(.print(try Print(element: child)))
 
                     default:
                         contents.append(.unknown(child.name))
@@ -83,6 +83,7 @@ extension MusicXMLDocument {
             case forward(duration: Int)
             case barline(BarLine)
             case direction(Direction)
+            case print(Print)
         }
 
     }
@@ -98,6 +99,7 @@ extension MusicXMLDocument.Measure.Content: CustomStringConvertible {
         case .unknown(let name): "unknown(\(name))"
         case .barline(let barline): barline.debugDescription
         case .direction(let direction): direction.debugDescription
+        case .print(let layout): String(describing: layout)
         }
     }
 }

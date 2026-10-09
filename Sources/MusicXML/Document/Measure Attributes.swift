@@ -68,6 +68,11 @@ extension MusicXMLDocument.Measure.Attributes {
             public struct NonTraditionalValue: Equatable {
                 public let step: MusicXMLDocument.Note.Pitch.Step
                 public let alter: Double
+
+                public init(step: MusicXMLDocument.Note.Pitch.Step, alter: Double) {
+                    self.step = step
+                    self.alter = alter
+                }
             }
         }
 
@@ -75,7 +80,7 @@ extension MusicXMLDocument.Measure.Attributes {
             KeySignature(octave: [], cancel: false, value: .none)
         }
 
-        init(octave: [Int], cancel: Bool, value: Value) {
+        public init(octave: [Int] = [], cancel: Bool = false, value: Value) {
             self.octave = octave
             self.cancel = cancel
             self.value = value
@@ -170,6 +175,11 @@ extension MusicXMLDocument.Measure.Attributes {
 
             self.sign = try element.withChild(named: "sign", AEXMLElement.asEnumContainer)
             self.line = try element.withChild(named: "line", AEXMLElement.asIntContainer)
+        }
+
+        public init(sign: Sign, line: Int) {
+            self.sign = sign
+            self.line = line
         }
 
         public enum Sign: String, CaseIterable, CustomStringConvertible {

@@ -20,6 +20,10 @@ extension AEXMLElement {
 
         let root: AEXMLElement
 
+        public init(root: AEXMLElement) {
+            self.root = root
+        }
+
         public func detailedDescription(
             using descriptor: DetailedDescription.Descriptor<XMLElementDescriptor>,
             configuration: DescriptionConfiguration

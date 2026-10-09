@@ -19,6 +19,10 @@ extension MusicXMLDocument.Measure {
         public let sound: Sound?
         /// Staff values are numbers, with 1 referring to the top-most staff in a part.
         public let staff: Int?
+        public let placement: MusicXMLDocument.Placement?
+        public let voice: Int?
+        /// Offset from the current musical position, in divisions.
+        public let offset: Double?
         
         @accessingAssociatedValues
         public enum Content {
@@ -28,58 +32,59 @@ extension MusicXMLDocument.Measure {
             case wedge(Wedge)
             case dynamics(Dynamics)
             case dashes(Dashes)
+            case words(MusicXMLDocument.FormattedText)
+            case rehearsal(MusicXMLDocument.FormattedText)
+            case segno
+            case coda
+            case pedal(Pedal)
+            case bracket(Bracket)
             case unknown(String)
         }
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "direction")
             
-            var words: AEXMLElement? = nil
+            var words: AEXMLElement?
             var contents: [Content] = []
-            for child in element.children where child.name == "direction-type" {
-                guard let firstChild = child.children.first else { continue } // exactly one, so first child.
-                
-                switch firstChild.name {
-                case "metronome":
-                    let metronome = try Metronome(element: firstChild)
-                    contents.append(.metronome(metronome))
-                    
-                case "octave-shift":
-                    let octaveShift = try OctaveShift(element: firstChild)
-                    contents.append(.octaveShift(octaveShift))
-                    
-                case "wedge":
-                    let wedge = try Wedge(element: firstChild)
-                    contents.append(.wedge(wedge))
-                    
-                case "dynamics":
-                    let dynamics = try Dynamics(element: firstChild)
-                    contents.append(.dynamics(dynamics))
-                    
-                case "dashes":
-                    guard let dashes = try Dashes(element: firstChild, words: words) else { fallthrough }
-                    contents.append(.dashes(dashes))
-                    
-                case "words":
-                    words = firstChild
-                    continue
-                    
-                default:
-                    contents.append(.unknown(firstChild.name))
+            for container in element.children where container.name == "direction-type" {
+                for child in container.children {
+                    switch child.name {
+                    case "metronome": contents.append(.metronome(try Metronome(element: child)))
+                    case "octave-shift": contents.append(.octaveShift(try OctaveShift(element: child)))
+                    case "wedge": contents.append(.wedge(try Wedge(element: child)))
+                    case "dynamics": contents.append(.dynamics(try Dynamics(element: child)))
+                    case "dashes":
+                        if let dashes = try Dashes(element: child, words: words) { contents.append(.dashes(dashes)) }
+                    case "words":
+                        contents.append(.words(try MusicXMLDocument.FormattedText(element: child)))
+                        words = child
+                        continue
+                    case "rehearsal": contents.append(.rehearsal(try MusicXMLDocument.FormattedText(element: child)))
+                    case "segno": contents.append(.segno)
+                    case "coda": contents.append(.coda)
+                    case "pedal": contents.append(.pedal(try Pedal(element: child)))
+                    case "bracket": contents.append(.bracket(try Bracket(element: child)))
+                    default: contents.append(.unknown(child.name))
+                    }
+                    words = nil
                 }
-                
-                words = nil
             }
-            
+
             self.contents = contents
             self.sound = try element.withOptionalChild(named: "sound", Sound.init)
             self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
+            self.placement = try element.optionalEnumAttribute("placement")
+            self.voice = try element.withOptionalChild(named: "voice", AEXMLElement.asIntContainer)
+            self.offset = try element.withOptionalChild(named: "offset", AEXMLElement.asDoubleContainer)
         }
 
-        public init(contents: [MusicXMLDocument.Measure.Direction.Content], sound: MusicXMLDocument.Measure.Direction.Sound? = nil, staff: Int? = nil) {
+        public init(contents: [MusicXMLDocument.Measure.Direction.Content], sound: MusicXMLDocument.Measure.Direction.Sound? = nil, staff: Int? = nil, placement: MusicXMLDocument.Placement? = nil, voice: Int? = nil, offset: Double? = nil) {
             self.contents = contents
             self.sound = sound
             self.staff = staff
+            self.placement = placement
+            self.voice = voice
+            self.offset = offset
         }
         
 
@@ -153,6 +158,11 @@ extension MusicXMLDocument.Measure {
                 self.tempo = try? element.attribute(named: "tempo")
                 self.dynamics = try? element.attribute(named: "dynamics")
             }
+
+            public init(tempo: Int? = nil, dynamics: Double? = nil) {
+                self.tempo = tempo
+                self.dynamics = dynamics
+            }
         }
         
         public struct OctaveShift {
@@ -200,6 +210,12 @@ extension MusicXMLDocument.Measure {
                 self.shift = signum.map({ $0 * shift })
                 
                 self.number = try? element.attribute(named: "number")
+            }
+
+            public init(phase: StartStopContinue, shift: Int? = nil, number: Int? = nil) {
+                self.phase = phase
+                self.shift = shift
+                self.number = number
             }
         }
         
@@ -254,14 +270,10 @@ extension MusicXMLDocument.Measure {
                 
                 self.type = try element.attribute(named: "type")
                 self.value = try? words?.asEnumContainer()
-                self.number = try element.attribute(named: "number")
-                
-                if value == nil && type == .start { // read failed
-                    return nil
-                }
+                self.number = try element.optionalAttribute("number")
             }
             
-            public init(type: StartStopContinue, value: Value, number: Int?) {
+            public init(type: StartStopContinue, value: Value? = nil, number: Int? = nil) {
                 self.type = type
                 self.value = value
                 self.number = number
@@ -306,15 +318,21 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                         }
                     }
                 case .octaveShift(let shift):
-                    descriptor.raw("\(shift)")
+                    descriptor.constant("\(shift)")
                 case .wedge(let wedge):
-                    descriptor.raw("\(wedge)")
+                    descriptor.constant("\(wedge)")
                 case .dynamics(let dynamics):
-                    descriptor.raw("\(dynamics)")
+                    descriptor.constant("\(dynamics)")
                 case .dashes(let dashes):
-                    descriptor.raw("\(dashes)")
+                    descriptor.constant("\(dashes)")
+                case .words(let text), .rehearsal(let text):
+                    descriptor.constant(text.text)
+                case .segno: descriptor.constant("segno")
+                case .coda: descriptor.constant("coda")
+                case .pedal(let pedal): descriptor.constant("\(pedal)")
+                case .bracket(let bracket): descriptor.constant("\(bracket)")
                 case .unknown(let unknown):
-                    descriptor.raw("unknown(\(unknown))")
+                    descriptor.constant("unknown(\(unknown))")
                 }
             }
             descriptor.optional(for: \.sound)

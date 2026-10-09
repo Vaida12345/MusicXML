@@ -19,8 +19,11 @@ extension MusicXMLDocument {
         public let grace: Grace?
         /// Whether this note should be connected with the previous one to form a chord.
         public let isChord: Bool
-        /// If `nil`, this is a rest.
+        /// If both pitch and unpitched are nil, this is a rest.
         public let pitch: Pitch?
+        public let unpitched: Unpitched?
+        public let isMeasureRest: Bool
+        public let lyrics: [Lyric]
         /// Grace notes don't have duration.
         public let duration: Int?
         public let ties: Set<MusicXMLDocument.Measure.StartStop>
@@ -43,6 +46,9 @@ extension MusicXMLDocument {
             self.isChord = element.hasChild(named: "chord")
             self.grace = try element.withOptionalChild(named: "grace", Grace.init)
             self.pitch = try element.withOptionalChild(named: "pitch", Pitch.init)
+            self.unpitched = try element.withOptionalChild(named: "unpitched", Unpitched.init)
+            self.isMeasureRest = element.children.first(where: { $0.name == "rest" })?.attributes["measure"] == "yes"
+            self.lyrics = try element.mapChildren(named: "lyric", Lyric.init)
             if self.grace == nil { // is not grace
                 self.duration = try element.withChild(named: "duration", AEXMLElement.asIntContainer)
             } else {
@@ -73,11 +79,14 @@ extension MusicXMLDocument {
         }
         
         /// - Parameter id: This should be the offset of this content in measure.
-        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop>, voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam], notations: MusicXMLDocument.Note.Notations? = nil) {
+        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool = false, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop> = [], voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int = 0, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam] = [], notations: MusicXMLDocument.Note.Notations? = nil, unpitched: Unpitched? = nil, isMeasureRest: Bool = false, lyrics: [Lyric] = []) {
             self.id = id
             self.grace = grace
             self.isChord = isChord
             self.pitch = pitch
+            self.unpitched = unpitched
+            self.isMeasureRest = isMeasureRest
+            self.lyrics = lyrics
             self.duration = duration
             self.ties = ties
             self.voice = voice
@@ -148,70 +157,9 @@ extension MusicXMLDocument {
             
             init(element: AEXMLElement) throws(ParseError) {
                 assert(element.name == "grace")
-                self.hasSlash = element.hasChild(named: "slash")
+                self.hasSlash = element.attributes["slash"] == "yes"
             }
         }
-        
-        public struct Notations: DetailedStringConvertible {
-            
-            public let arpeggiate: Arpeggiate?
-            public let glissando: Glissando?
-            
-            init(element: AEXMLElement) throws(ParseError) {
-                assert(element.name == "notations")
-                
-                self.arpeggiate = try element.withOptionalChild(named: "arpeggiate", Arpeggiate.init)
-                self.glissando = try element.withOptionalChild(named: "glissando", Glissando.init)
-            }
-            
-            public init(arpeggiate: MusicXMLDocument.Note.Notations.Arpeggiate? = nil, glissando: MusicXMLDocument.Note.Notations.Glissando? = nil) {
-                self.arpeggiate = arpeggiate
-                self.glissando = glissando
-            }
-            
-            public struct Arpeggiate {
-                
-                /// Identifier.
-                public let number: Int?
-                
-                init(element: AEXMLElement) throws(ParseError) {
-                    assert(element.name == "arpeggiate")
-                    
-                    self.number = try? element.attribute(named: "number")
-                }
-                
-                public init(number: Int? = nil) {
-                    self.number = number
-                }
-            }
-            
-            public struct Glissando {
-                
-                public let type: MusicXMLDocument.Measure.StartStop
-                /// Distinguishes multiple glissandos when they overlap in MusicXML document order. 
-                public let number: Int?
-                
-                init(element: AEXMLElement) throws(ParseError) {
-                    assert(element.name == "glissando")
-                    
-                    self.type = try element.attribute(named: "type", as: MusicXMLDocument.Measure.StartStop.self)
-                    self.number = try? element.attribute(named: "number")
-                }
-                
-                public init(type: MusicXMLDocument.Measure.StartStop, number: Int? = nil) {
-                    self.type = type
-                    self.number = number
-                }
-            }
-            
-            public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note.Notations>) -> any DescriptionBlockProtocol {
-                descriptor.container {
-                    descriptor.optional(for: \.arpeggiate)
-                    descriptor.optional(for: \.glissando)
-                }
-            }
-        }
-
 
     }
 
@@ -223,7 +171,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note>) -> any DescriptionBlockProtocol {
         descriptor.container(self.pitch?.description ?? "rest") {
             if self.isChord {
-                descriptor.raw("chord")
+                descriptor.constant("chord")
             }
             descriptor.optional(for: \.grace)
             descriptor.optional(for: \.duration)

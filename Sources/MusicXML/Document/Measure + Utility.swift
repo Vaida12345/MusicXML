@@ -41,7 +41,7 @@ extension MusicXMLDocument.Measure {
             case .forward(let duration):
                 localTime += duration
                 
-            case .direction, .barline, .unknown:
+            case .direction, .barline, .unknown, .print:
                 break
             }
         }

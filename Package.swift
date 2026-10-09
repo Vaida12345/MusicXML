@@ -37,7 +37,7 @@ let package = Package(
         ),
         .testTarget(
             name: "MusicXMLTests",
-            dependencies: ["MusicXML", "FinderItem"]
+            dependencies: ["MusicXML", "FinderItem", "AEXML", "ZIPFoundation"]
         ),
     ],
     swiftLanguageModes: [.v6]
