@@ -20,6 +20,8 @@ public struct MusicXMLDocument {
     public let title: String?
     public let composer: String?
     public let credits: [Credit]
+    /// Names of software that created the encoding, in document order.
+    public let encodingSoftware: [String]
 
     public init(data: Data) throws {
         let document: AEXMLDocument
@@ -37,6 +39,13 @@ public struct MusicXMLDocument {
         }
         self.composer = root.children.first(where: { $0.name == "identification" })?
             .children.first(where: { $0.name == "creator" && $0.attributes["type"] == "composer" })?.value
+        self.encodingSoftware = try root.withOptionalChild(named: "identification") { (identification) throws(ParseError) in
+            try identification.withOptionalChild(named: "encoding") { (encoding) throws(ParseError) in
+                try encoding.mapChildren(named: "software") { (software) throws(ParseError) in
+                    try software.asTextContainer()
+                }
+            } ?? []
+        } ?? []
         self.credits = try root.mapChildren(named: "credit", Credit.init)
         self.partList = try root.withChild(named: "part-list", PartList.init)
 
@@ -48,7 +57,7 @@ public struct MusicXMLDocument {
         self.layout = try Layout(root: root)
     }
     
-    public init(layout: MusicXMLDocument.Layout = .init(), version: String? = nil, partList: MusicXMLDocument.PartList, parts: [MusicXMLDocument.Part], title: String? = nil, composer: String? = nil, credits: [Credit] = []) {
+    public init(layout: MusicXMLDocument.Layout = .init(), version: String? = nil, partList: MusicXMLDocument.PartList, parts: [MusicXMLDocument.Part], title: String? = nil, composer: String? = nil, credits: [Credit] = [], encodingSoftware: [String] = []) {
         self.layout = layout
         self.version = version
         self.partList = partList
@@ -56,6 +65,7 @@ public struct MusicXMLDocument {
         self.title = title
         self.composer = composer
         self.credits = credits
+        self.encodingSoftware = encodingSoftware
     }
 }
 
@@ -71,6 +81,7 @@ extension MusicXMLDocument: DetailedStringConvertible {
         return descriptor.container(title) {
             descriptor.optional(for: \.title)
             descriptor.optional(for: \.composer)
+            descriptor.value(for: \.encodingSoftware)
             descriptor.value(for: \.credits)
             descriptor.value(for: \.partList)
             descriptor.value(for: \.layout)

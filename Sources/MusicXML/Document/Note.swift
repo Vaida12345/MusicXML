@@ -43,6 +43,8 @@ extension MusicXMLDocument {
         /// Number of beams
         public let beams: [Beam]
         public let notations: Notations?
+        /// Text displayed inside an ordinary staff notehead, independent of pitch and rhythm.
+        public let noteheadText: NoteheadText?
 
 
         init(id: Int, element: AEXMLElement) throws(ParseError) {
@@ -82,12 +84,13 @@ extension MusicXMLDocument {
             self.beams = beam
 
             self.notations = try element.withOptionalChild(named: "notations", Notations.init)
+            self.noteheadText = try element.withOptionalChild(named: "notehead-text", NoteheadText.init)
         }
         
         /// - Parameter id: This should be the offset of this content in measure.
         /// - Parameter dynamics: MusicXML percentage. When supplied, this takes precedence over midiVelocity.
         /// - Parameter midiVelocity: Convenience input converted to a MusicXML dynamics percentage.
-        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool = false, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop> = [], voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int = 0, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam] = [], notations: MusicXMLDocument.Note.Notations? = nil, unpitched: Unpitched? = nil, isMeasureRest: Bool = false, lyrics: [Lyric] = [], stemGeometry: StemGeometry? = nil, dynamics: Double? = nil, midiVelocity: Int? = nil) {
+        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool = false, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop> = [], voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int = 0, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam] = [], notations: MusicXMLDocument.Note.Notations? = nil, unpitched: Unpitched? = nil, isMeasureRest: Bool = false, lyrics: [Lyric] = [], stemGeometry: StemGeometry? = nil, dynamics: Double? = nil, midiVelocity: Int? = nil, noteheadText: NoteheadText? = nil) {
             self.id = id
             self.grace = grace
             self.isChord = isChord
@@ -108,6 +111,7 @@ extension MusicXMLDocument {
             self.staff = staff
             self.beams = beams
             self.notations = notations
+            self.noteheadText = noteheadText
         }
         
         public enum StemValue: String, CaseIterable {
@@ -201,6 +205,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
             descriptor.value(for: \.beams)
                 .serialized()
             descriptor.optional(for: \.notations)
+            descriptor.optional(for: \.noteheadText)
         }
         .hideEmptySequence()
     }

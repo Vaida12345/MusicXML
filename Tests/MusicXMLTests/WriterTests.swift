@@ -45,7 +45,7 @@ private func generatedScore(title: String = "Piano & <Study>") -> Score {
                                      tuplets: [.init(type: .start, number: 1, bracket: true, placement: .above, showNumber: .both,
                                                      actual: .init(number: 3, type: .eighth, dots: 1), normal: .init(number: 2, type: .eighth))]),
                     lyrics: [.init(text: "la & <la>", syllabic: .begin, extend: .start, number: "1", placement: .below)],
-                    stemGeometry: .init(defaultX: 12.5, defaultY: 35, relativeX: -1.5, relativeY: 7.25), midiVelocity: 100)
+                    stemGeometry: .init(defaultX: 12.5, defaultY: 35, relativeX: -1.5, relativeY: 7.25), midiVelocity: 100, noteheadText: .init("Do"))
     let measure = Measure(number: "1", attributes: .init(divisions: 4, keySignature: .init(value: .traditional(fifths: 1, mode: .major)),
                                                           timeSignature: .init(beats: 4, beatType: 4), staves: 2, clef: .init(sign: .treble, line: 2), clefs: [.init(sign: .bass, line: 4, number: 2)]), contents: [
         .print(.init(newSystem: true, newPage: true, pageNumber: "2", blankPages: 1,
@@ -63,7 +63,8 @@ private func generatedScore(title: String = "Piano & <Study>") -> Score {
     return Score(layout: layout, partList: .init(scores: [.init(id: "P1", name: "Piano", instrument: "Grand Piano")]),
                  parts: [.init(id: "P1", measures: [measure])], title: title, composer: "A & B",
                  credits: [.init(page: 1, types: ["title"], words: [.init(title, font: .init(size: 22, weight: .bold),
-                                                                        defaultX: 600, defaultY: 1500, justify: .center, verticalAlignment: .top)])])
+                                                                        defaultX: 600, defaultY: 1500, justify: .center, verticalAlignment: .top)])],
+                 encodingSoftware: ["Engraver & <Exporter>", "MusicXML Framework"])
 }
 
 private func withDestination<T>(_ body: (FinderItem) throws -> T) throws -> T {
@@ -381,5 +382,109 @@ extension WriterTests {
         #expect(Note.midiVelocity(forDynamics: .infinity) == 127)
         #expect(Note.midiVelocity(forDynamics: -.infinity) == 0)
         #expect(Note.midiVelocity(forDynamics: .nan) == 0)
+    }
+}
+
+extension WriterTests {
+    @Test(arguments: Score.ExportFormat.allCases)
+    func encodingSoftwareCoexistsWithComposer(format: Score.ExportFormat) throws {
+        let root = try exportedXML(generatedScore(), format: format).root
+        let identifications = root.children.filter { $0.name == "identification" }
+        #expect(identifications.count == 1)
+        let identification = try #require(identifications.first)
+        #expect(identification.children.map(\.name) == ["creator", "encoding"])
+        #expect(identification["creator"].value == "A & B")
+        #expect(identification["creator"].attributes["type"] == "composer")
+        #expect(identification["encoding"].children.map(\.value) == ["Engraver & <Exporter>", "MusicXML Framework"])
+        try withDestination { destination in
+            try generatedScore().write(to: destination, format: format)
+            let decoded = try Score(data: Data(contentsOf: destination.url))
+            #expect(decoded.composer == "A & B")
+            #expect(decoded.encodingSoftware == ["Engraver & <Exporter>", "MusicXML Framework"])
+        }
+    }
+
+    @Test func softwareOnlyAndComposerOnlyMetadata() throws {
+        let partList = Score.PartList(scores: [.init(id: "P1", name: "Piano")])
+        let parts = [Score.Part(id: "P1", measures: [.init(number: "1", contents: [.note(.init(id: 0, duration: 1))])])]
+        let softwareOnly = Score(partList: partList, parts: parts, encodingSoftware: ["Exporter"])
+        let softwareIdentification = try exportedXML(softwareOnly).root["identification"]
+        #expect(softwareIdentification.children.map(\.name) == ["encoding"])
+        #expect(softwareIdentification["encoding"]["software"].value == "Exporter")
+        let composerOnly = Score(partList: partList, parts: parts, composer: "Composer")
+        #expect(try exportedXML(composerOnly).root["identification"].children.map(\.name) == ["creator"])
+        #expect(composerOnly.encodingSoftware.isEmpty)
+        let empty = Score(partList: partList, parts: parts)
+        #expect(try exportedXML(empty).root.children.filter { $0.name == "identification" }.isEmpty)
+    }
+
+    @Test(arguments: ["1", "C", "Do", "Ré", "Si♭", "C & <D>"])
+    func noteheadLabelsPreserveMusicalContent(label: String) throws {
+        let note = Note(id: 0, pitch: .init(step: .D, alteration: -1, octave: 4), duration: 3,
+                        type: .eighth, dot: 1, stem: .up, staff: 1, noteheadText: .init(label))
+        let score = Score(partList: .init(scores: [.init(id: "P1", name: "Piano")]), parts: [.init(id: "P1", measures: [
+            .init(number: "1", attributes: .init(divisions: 4, clef: .init(sign: .treble, line: 2)), contents: [.note(note)])
+        ])])
+        let measure = try exportedXML(score).root["part"]["measure"]
+        let writtenNote = measure["note"]
+        #expect(writtenNote["notehead-text"]["display-text"].value == label)
+        #expect(writtenNote["pitch"]["step"].value == "D")
+        #expect(writtenNote["pitch"]["alter"].double == -1)
+        #expect(writtenNote["duration"].int == 3)
+        #expect(writtenNote["type"].value == "eighth")
+        #expect(writtenNote.children.filter { $0.name == "dot" }.count == 1)
+        #expect(measure["attributes"]["clef"]["sign"].value == "G")
+        #expect(!writtenNote.children.contains { $0.name == "lyric" || $0.name == "unpitched" || $0.name == "notehead" })
+        #expect(writtenNote.children.map(\.name) == ["pitch", "duration", "type", "dot", "stem", "notehead-text", "staff"])
+    }
+
+    @Test(arguments: Score.ExportFormat.allCases)
+    func importedSoftwareAndNoteheadTextSurviveReadWrite(format: Score.ExportFormat) throws {
+        let xml = """
+        <score-partwise version="4.0"><identification>
+        <creator type="composer">Composer &amp; Co.</creator>
+        <encoding><software>First &amp; Second</software><software>Exporter 2</software></encoding>
+        </identification><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+        <part id="P1"><measure number="1"><attributes><divisions>4</divisions>
+        <clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>
+        <note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><type>eighth</type>
+        <stem>up</stem><notehead-text>
+        <display-text font-family="Times New Roman" font-size="8" font-weight="bold">Ré</display-text>
+        <display-text font-style="italic" default-x="1.5" default-y="-10" justify="center" valign="middle">♭</display-text>
+        </notehead-text><staff>1</staff></note>
+        <note><pitch><step>D</step><octave>4</octave></pitch><duration>2</duration><type>eighth</type></note>
+        </measure></part></score-partwise>
+        """
+        let original = try Score(data: Data(xml.utf8))
+        #expect(original.encodingSoftware == ["First & Second", "Exporter 2"])
+        let originalNote = try #require(original.parts[0].measures[0].contents[0].as(.note))
+        #expect(originalNote.noteheadText?.displayTexts.map(\.text) == ["Ré", "♭"])
+        #expect(original.parts[0].measures[0].contents[1].as(.note)?.noteheadText == nil)
+        try withDestination { destination in
+            try original.write(to: destination, format: format)
+            let decoded = try Score(data: Data(contentsOf: destination.url))
+            #expect(decoded.composer == original.composer)
+            #expect(decoded.encodingSoftware == original.encodingSoftware)
+            let measure = decoded.parts[0].measures[0]
+            #expect(measure.attributes?.clefs.map(\.number) == [1, 2])
+            #expect(measure.attributes?.clefs.map(\.sign) == [.treble, .bass])
+            let note = try #require(measure.contents[0].as(.note))
+            #expect(note.pitch == originalNote.pitch)
+            #expect(note.duration == originalNote.duration)
+            #expect(note.type == originalNote.type)
+            #expect(note.stem == originalNote.stem)
+            #expect(note.staff == originalNote.staff)
+            let texts = try #require(note.noteheadText?.displayTexts)
+            #expect(texts.map(\.text) == ["Ré", "♭"])
+            #expect(texts[0].font?.family == "Times New Roman")
+            #expect(texts[0].font?.size == 8)
+            #expect(texts[0].font?.weight == .bold)
+            #expect(texts[1].font?.style == .italic)
+            #expect(texts[1].defaultX == 1.5)
+            #expect(texts[1].defaultY == -10)
+            #expect(texts[1].justify == .center)
+            #expect(texts[1].verticalAlignment == .middle)
+            #expect(measure.contents[1].as(.note)?.noteheadText == nil)
+        }
     }
 }

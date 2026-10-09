@@ -1,7 +1,7 @@
 import AEXML
 
 extension MusicXMLDocument {
-    /// Text used by score credits and textual directions.
+    /// Text used by score credits, textual directions, and notehead text.
     public struct FormattedText {
         public let text: String
         public let font: Font?

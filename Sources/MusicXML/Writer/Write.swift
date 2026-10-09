@@ -29,8 +29,15 @@ extension MusicXMLDocument {
         let root = AEXMLElement(name: "score-partwise")
         root.setAttribute("version", version ?? "4.0")
         if let title { root.addChild(name: "work").addValue("work-title", title) }
-        if let composer {
-            root.addChild(name: "identification").addChild(name: "creator", value: composer, attributes: ["type": "composer"])
+        if composer != nil || !encodingSoftware.isEmpty {
+            let identification = root.addChild(name: "identification")
+            if let composer {
+                identification.addChild(name: "creator", value: composer, attributes: ["type": "composer"])
+            }
+            if !encodingSoftware.isEmpty {
+                let encoding = identification.addChild(name: "encoding")
+                for software in encodingSoftware { encoding.addValue("software", software) }
+            }
         }
         let defaults = layout.xmlElement
         if !defaults.children.isEmpty { root.addChild(defaults) }
@@ -187,6 +194,7 @@ extension MusicXMLDocument.Note {
             let stemElement = element.addChild(name: "stem", value: stem.rawValue)
             stemGeometry?.apply(to: stemElement)
         }
+        if let noteheadText { element.addChild(noteheadText.xmlElement) }
         element.addValue("staff", staff)
         for (index, beam) in beams.enumerated() {
             element.addChild(name: "beam", value: beam.rawValue, attributes: ["number": String(index + 1)])

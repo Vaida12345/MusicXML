@@ -99,6 +99,30 @@ The static helpers `Note.dynamics(forMIDIVelocity:)` and
 `dynamics * 90 / 100` respectively. Halfway MIDI values round away from zero.
 This note-level dynamics value is separate from direction/sound dynamics.
 
+`MusicXMLDocument.encodingSoftware` accepts an ordered array of software names.
+These are written to `identification/encoding/software` alongside composer
+metadata in the same identification element:
+
+```swift
+let score = MusicXMLDocument(
+    partList: .init(scores: [.init(id: "P1", name: "Piano")]),
+    parts: [.init(id: "P1", measures: [])],
+    composer: "Composer",
+    encodingSoftware: ["My Engraving Exporter"]
+)
+let labeledNote = MusicXMLDocument.Note(
+    id: 0, pitch: .init(step: .C, octave: 4), duration: 1, type: .quarter,
+    noteheadText: .init("Do", font: .init(size: 8))
+)
+```
+
+`Note.NoteheadText` writes `notehead-text/display-text` inside an ordinary staff
+notehead. Labels such as `"1"`, `"C"`, and `"Ré"` are text independent of pitch,
+clef, and rhythm. For multiple styled segments, use
+`.init(displayTexts: [.init("Do"), .init("♯", font: .init(size: 8))])`.
+Both software names and notehead text (including supported formatting) are parsed
+and retained through XML/MXL read/write. Neither feature is emitted when omitted.
+
 Writing serializes the supplied values without runtime musical/schema validation.
 Unknown name-only placeholders are omitted. Export is intended for generating
 scores, and does not preserve unmodeled information from imported documents.
