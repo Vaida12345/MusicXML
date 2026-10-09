@@ -161,6 +161,7 @@ extension MusicXMLDocument.Note {
     var xmlElement: AEXMLElement {
         let element = AEXMLElement(name: "note")
         element.setAttribute("dynamics", dynamics)
+        element.setYesNoAttribute("print-object", printObject)
         if let grace {
             element.addChild(name: "grace", attributes: ["slash": grace.hasSlash ? "yes" : "no"])
         }

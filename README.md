@@ -123,6 +123,17 @@ clef, and rhythm. For multiple styled segments, use
 Both software names and notehead text (including supported formatting) are parsed
 and retained through XML/MXL read/write. Neither feature is emitted when omitted.
 
+Use `Note.printObject` to control whether a note or rest is printed:
+
+```swift
+let hiddenRest = MusicXMLDocument.Note(id: 0, duration: 4, type: .whole, printObject: false)
+```
+
+`false` writes `print-object="no"`; `true` writes `print-object="yes"`.
+The default `nil` omits the attribute, preserving the default visible behavior.
+Hidden rests remain in the score with their duration and timing intact, and
+`printObject` is retained through XML/MXL read/write.
+
 Writing serializes the supplied values without runtime musical/schema validation.
 Unknown name-only placeholders are omitted. Export is intended for generating
 scores, and does not preserve unmodeled information from imported documents.

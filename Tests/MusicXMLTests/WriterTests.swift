@@ -54,7 +54,7 @@ private func generatedScore(title: String = "Piano & <Study>") -> Score {
         .direction(direction), .note(note),
         .note(.init(id: 3, grace: .init(hasSlash: true), pitch: .init(step: .D, octave: 4), type: .eighth)),
         .backup(duration: 4),
-        .note(.init(id: 5, duration: 16, voice: 2, staff: 2, isMeasureRest: true)),
+        .note(.init(id: 5, duration: 16, voice: 2, staff: 2, isMeasureRest: true, printObject: false)),
         .forward(duration: 1),
         .note(.init(id: 7, duration: 1, type: .sixteenth, unpitched: .init(displayStep: .C, displayOctave: 5))),
         .barline(.init(ending: .init(number: [1, 2], type: .start), repeat: .init(direction: .backward))),
@@ -486,5 +486,56 @@ extension WriterTests {
             #expect(texts[1].verticalAlignment == .middle)
             #expect(measure.contents[1].as(.note)?.noteheadText == nil)
         }
+    }
+}
+
+extension WriterTests {
+    @Test(arguments: Score.ExportFormat.allCases)
+    func printObjectPreservesRestTiming(format: Score.ExportFormat) throws {
+        let rests = [
+            Note(id: 0, duration: 3, type: .quarter, dot: 1, printObject: false),
+            Note(id: 1, duration: 2, type: .quarter, printObject: true),
+            Note(id: 2, duration: 1, type: .eighth)
+        ]
+        let score = Score(partList: .init(scores: [.init(id: "P1", name: "Piano")]), parts: [.init(id: "P1", measures: [
+            .init(number: "1", attributes: .init(divisions: 2), contents: rests.map { .note($0) })
+        ])])
+        let measure = try exportedXML(score, format: format).root["part"]["measure"]
+        let notes = measure.children.filter { $0.name == "note" }
+        #expect(notes.count == 3)
+        #expect(notes.map { $0.attributes["print-object"] } == ["no", "yes", nil])
+        #expect(notes.map { $0["duration"].int } == [3, 2, 1])
+        #expect(notes.allSatisfy { $0.children.contains { $0.name == "rest" } })
+        #expect(notes[0]["type"].value == "quarter")
+        #expect(notes[0].children.filter { $0.name == "dot" }.count == 1)
+        try withDestination { destination in
+            try score.write(to: destination, format: format)
+            let decoded = try Score(data: Data(contentsOf: destination.url))
+            let decodedMeasure = decoded.parts[0].measures[0]
+            let decodedNotes = decodedMeasure.contents.compactMap { $0.as(.note) }
+            #expect(decodedNotes.map(\.printObject) == [false, true, nil])
+            #expect(decodedNotes.map(\.duration) == [3, 2, 1])
+            #expect(decodedNotes.allSatisfy { $0.pitch == nil && $0.unpitched == nil })
+            #expect(decodedMeasure.makeNoteEventPositions().totalTime == 6)
+        }
+    }
+
+    @Test func readsPrintObjectFromIndependentXML() throws {
+        let xml = """
+        <score-partwise><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+        <part id="P1"><measure number="1">
+        <note print-object="no"><rest/><duration>4</duration></note>
+        <note print-object="yes"><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration></note>
+        <note><rest/><duration>2</duration></note>
+        </measure></part></score-partwise>
+        """
+        let score = try Score(data: Data(xml.utf8))
+        let notes = score.parts[0].measures[0].contents.compactMap { $0.as(.note) }
+        #expect(notes.map(\.printObject) == [false, true, nil])
+        #expect(notes.map(\.duration) == [4, 1, 2])
+        #expect(notes[1].pitch?.step == .C)
+        let writtenNotes = try exportedXML(score).root["part"]["measure"].children.filter { $0.name == "note" }
+        #expect(writtenNotes.map { $0.attributes["print-object"] } == ["no", "yes", nil])
+        #expect(writtenNotes.map { $0["duration"].int } == [4, 1, 2])
     }
 }
