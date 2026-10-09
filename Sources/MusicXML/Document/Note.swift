@@ -34,6 +34,10 @@ extension MusicXMLDocument {
         public let accidental: Accidental?
         public let timeModification: TimeModification?
         public let stem: StemValue?
+        /// Calculated stem endpoint coordinates in MusicXML tenths, independent of direction.
+        public let stemGeometry: StemGeometry?
+        /// Note-on velocity expressed as a percentage of MIDI velocity 90. Nil leaves it unspecified.
+        public let dynamics: Double?
         /// 1 referring to the top-most staff
         public let staff: Int?
         /// Number of beams
@@ -67,6 +71,8 @@ extension MusicXMLDocument {
             self.accidental = try element.withOptionalChild(named: "accidental", AEXMLElement.asEnumContainer)
             self.timeModification = try element.withOptionalChild(named: "time-modification", TimeModification.init)
             self.stem = try element.withOptionalChild(named: "stem", AEXMLElement.asEnumContainer)
+            self.stemGeometry = try element.withOptionalChild(named: "stem", StemGeometry.init)
+            self.dynamics = try element.optionalAttribute("dynamics")
             self.staff = try element.withOptionalChild(named: "staff", AEXMLElement.asIntContainer)
 
             var beam: [Beam] = []
@@ -79,7 +85,9 @@ extension MusicXMLDocument {
         }
         
         /// - Parameter id: This should be the offset of this content in measure.
-        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool = false, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop> = [], voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int = 0, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam] = [], notations: MusicXMLDocument.Note.Notations? = nil, unpitched: Unpitched? = nil, isMeasureRest: Bool = false, lyrics: [Lyric] = []) {
+        /// - Parameter dynamics: MusicXML percentage. When supplied, this takes precedence over midiVelocity.
+        /// - Parameter midiVelocity: Convenience input converted to a MusicXML dynamics percentage.
+        public init(id: Int, grace: MusicXMLDocument.Note.Grace? = nil, isChord: Bool = false, pitch: MusicXMLDocument.Note.Pitch? = nil, duration: Int? = nil, ties: Set<MusicXMLDocument.Measure.StartStop> = [], voice: Int? = nil, type: MusicXMLDocument.Note.NoteType? = nil, dot: Int = 0, accidental: MusicXMLDocument.Note.Accidental? = nil, timeModification: MusicXMLDocument.Note.TimeModification? = nil, stem: MusicXMLDocument.Note.StemValue? = nil, staff: Int? = nil, beams: [MusicXMLDocument.Note.Beam] = [], notations: MusicXMLDocument.Note.Notations? = nil, unpitched: Unpitched? = nil, isMeasureRest: Bool = false, lyrics: [Lyric] = [], stemGeometry: StemGeometry? = nil, dynamics: Double? = nil, midiVelocity: Int? = nil) {
             self.id = id
             self.grace = grace
             self.isChord = isChord
@@ -95,6 +103,8 @@ extension MusicXMLDocument {
             self.accidental = accidental
             self.timeModification = timeModification
             self.stem = stem
+            self.stemGeometry = stemGeometry
+            self.dynamics = dynamics ?? midiVelocity.map(Self.dynamics(forMIDIVelocity:))
             self.staff = staff
             self.beams = beams
             self.notations = notations
@@ -185,6 +195,8 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
             descriptor.optional(for: \.accidental)
             descriptor.optional(for: \.timeModification)
             descriptor.optional(for: \.stem)
+            descriptor.optional(for: \.stemGeometry)
+            descriptor.optional(for: \.dynamics)
             descriptor.optional(for: \.staff)
             descriptor.value(for: \.beams)
                 .serialized()

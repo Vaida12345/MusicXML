@@ -117,8 +117,9 @@ extension MusicXMLDocument.Measure.Attributes {
             time.addValue("beat-type", timeSignature.beatType)
         }
         element.addValue("staves", staves)
-        if let clef {
+        for clef in clefs {
             let clefElement = element.addChild(name: "clef")
+            clefElement.setAttribute("number", clef.number)
             clefElement.addEnum("sign", clef.sign)
             clefElement.addValue("line", clef.line)
         }
@@ -152,6 +153,7 @@ extension MusicXMLDocument.Measure.Attributes.KeySignature {
 extension MusicXMLDocument.Note {
     var xmlElement: AEXMLElement {
         let element = AEXMLElement(name: "note")
+        element.setAttribute("dynamics", dynamics)
         if let grace {
             element.addChild(name: "grace", attributes: ["slash": grace.hasSlash ? "yes" : "no"])
         }
@@ -181,7 +183,10 @@ extension MusicXMLDocument.Note {
             modification.addValue("actual-notes", timeModification.actual)
             modification.addValue("normal-notes", timeModification.normal)
         }
-        element.addEnum("stem", stem)
+        if let stem {
+            let stemElement = element.addChild(name: "stem", value: stem.rawValue)
+            stemGeometry?.apply(to: stemElement)
+        }
         element.addValue("staff", staff)
         for (index, beam) in beams.enumerated() {
             element.addChild(name: "beam", value: beam.rawValue, attributes: ["number": String(index + 1)])

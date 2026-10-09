@@ -18,7 +18,10 @@ extension MusicXMLDocument.Measure {
         public let keySignature: KeySignature?
         public let timeSignature: TimeSignature?
         public let staves: Int?
-        public let clef: Clef?
+        /// Clefs in document order, optionally associated with individual staff numbers.
+        public let clefs: [Clef]
+        /// The first clef, preserving the original single-clef API.
+        public var clef: Clef? { clefs.first }
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "attributes")
@@ -30,15 +33,16 @@ extension MusicXMLDocument.Measure {
 
             self.staves = try element.withOptionalChild(named: "staves", AEXMLElement.asIntContainer)
 
-            self.clef = try element.withOptionalChild(named: "clef", Clef.init)
+            self.clefs = try element.mapChildren(named: "clef", Clef.init)
         }
         
-        public init(divisions: Int? = nil, keySignature: MusicXMLDocument.Measure.Attributes.KeySignature? = nil, timeSignature: MusicXMLDocument.Measure.Attributes.TimeSignature? = nil, staves: Int? = nil, clef: MusicXMLDocument.Measure.Attributes.Clef? = nil) {
+        /// If both clef and clefs are supplied, the single clef precedes the collection.
+        public init(divisions: Int? = nil, keySignature: MusicXMLDocument.Measure.Attributes.KeySignature? = nil, timeSignature: MusicXMLDocument.Measure.Attributes.TimeSignature? = nil, staves: Int? = nil, clef: MusicXMLDocument.Measure.Attributes.Clef? = nil, clefs: [Clef] = []) {
             self.divisions = divisions
             self.keySignature = keySignature
             self.timeSignature = timeSignature
             self.staves = staves
-            self.clef = clef
+            self.clefs = (clef.map { [$0] } ?? []) + clefs
         }
 
     }
@@ -169,17 +173,21 @@ extension MusicXMLDocument.Measure.Attributes {
         public let sign: Sign
         /// Standard values are 2 for the G sign (treble clef), 4 for the F sign (bass clef), and 3 for the C sign (alto clef)
         public let line: Int
+        /// Staff number within the part, starting at 1. Nil leaves it unspecified.
+        public let number: Int?
 
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "clef")
 
             self.sign = try element.withChild(named: "sign", AEXMLElement.asEnumContainer)
             self.line = try element.withChild(named: "line", AEXMLElement.asIntContainer)
+            self.number = try element.optionalAttribute("number")
         }
 
-        public init(sign: Sign, line: Int) {
+        public init(sign: Sign, line: Int, number: Int? = nil) {
             self.sign = sign
             self.line = line
+            self.number = number
         }
 
         public enum Sign: String, CaseIterable, CustomStringConvertible {
@@ -206,7 +214,7 @@ extension MusicXMLDocument.Measure.Attributes: DetailedStringConvertible {
                 descriptor.value("keySignature", of: keySignature)
             }
             descriptor.optional(for: \.staves)
-            descriptor.value(for: \.clef)
+            descriptor.value(for: \.clefs)
         }
     }
 

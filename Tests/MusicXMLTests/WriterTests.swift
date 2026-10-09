@@ -44,9 +44,10 @@ private func generatedScore(title: String = "Piano & <Study>") -> Score {
                                      ornaments: [.init(.trillMark), .init(.tremolo, tremoloType: .single, value: "3")],
                                      tuplets: [.init(type: .start, number: 1, bracket: true, placement: .above, showNumber: .both,
                                                      actual: .init(number: 3, type: .eighth, dots: 1), normal: .init(number: 2, type: .eighth))]),
-                    lyrics: [.init(text: "la & <la>", syllabic: .begin, extend: .start, number: "1", placement: .below)])
+                    lyrics: [.init(text: "la & <la>", syllabic: .begin, extend: .start, number: "1", placement: .below)],
+                    stemGeometry: .init(defaultX: 12.5, defaultY: 35, relativeX: -1.5, relativeY: 7.25), midiVelocity: 100)
     let measure = Measure(number: "1", attributes: .init(divisions: 4, keySignature: .init(value: .traditional(fifths: 1, mode: .major)),
-                                                          timeSignature: .init(beats: 4, beatType: 4), staves: 2, clef: .init(sign: .treble, line: 2)), contents: [
+                                                          timeSignature: .init(beats: 4, beatType: 4), staves: 2, clef: .init(sign: .treble, line: 2), clefs: [.init(sign: .bass, line: 4, number: 2)]), contents: [
         .print(.init(newSystem: true, newPage: true, pageNumber: "2", blankPages: 1,
                      pageLayout: .init(width: 1200, height: 1600, margins: [.init(left: 90, right: 80, top: 100, bottom: 100, type: .odd)]),
                      systemLayout: .init(distance: 140), staffLayouts: [.init(number: 2, distance: 80)], measureDistance: 20, measureNumbering: .system)),
@@ -258,3 +259,127 @@ extension WriterTests {
     }
 }
 #endif
+
+extension WriterTests {
+    @Test(arguments: Score.ExportFormat.allCases)
+    func staffClefsStemGeometryAndVelocity(format: Score.ExportFormat) throws {
+        let score = generatedScore()
+        let original = try #require(score.parts[0].measures[0].attributes)
+        #expect(original.clef?.sign == .treble)
+        #expect(original.clefs.count == 2)
+        let root = try exportedXML(score, format: format).root
+        let measure = root["part"]["measure"]
+        let clefs = measure["attributes"].children.filter { $0.name == "clef" }
+        #expect(clefs.count == 2)
+        #expect(clefs[0]["sign"].value == "G")
+        #expect(clefs[0].attributes["number"] == nil)
+        #expect(clefs[1]["sign"].value == "F")
+        #expect(clefs[1].attributes["number"] == "2")
+        let note = measure["note"]
+        #expect(note.attributes["dynamics"].flatMap(Double.init) == Note.dynamics(forMIDIVelocity: 100))
+        #expect(note["stem"].value == "up")
+        #expect(note["stem"].attributes["default-x"] == "12.5")
+        #expect(note["stem"].attributes["default-y"] == "35.0")
+        #expect(note["stem"].attributes["relative-x"] == "-1.5")
+        #expect(note["stem"].attributes["relative-y"] == "7.25")
+        #expect(note.attributes["default-x"] == nil)
+        #expect(measure["direction"]["sound"].attributes["dynamics"] == "60.0")
+        try withDestination { destination in
+            try score.write(to: destination, format: format)
+            let decoded = try Score(data: Data(contentsOf: destination.url))
+            let attributes = try #require(decoded.parts[0].measures[0].attributes)
+            #expect(attributes.clefs.map(\.number) == [nil, 2])
+            #expect(attributes.clefs.map(\.sign) == [.treble, .bass])
+            #expect(attributes.clef?.sign == .treble)
+            let decodedNote = try #require(decoded.parts[0].measures[0].contents.compactMap { $0.as(.note) }.first)
+            #expect(decodedNote.stem == .up)
+            #expect(decodedNote.stemGeometry == .init(defaultX: 12.5, defaultY: 35, relativeX: -1.5, relativeY: 7.25))
+            #expect(decodedNote.midiVelocity == 100)
+        }
+    }
+
+    @Test func parsesIndependentClefsAndNoteAttributes() throws {
+        let xml = """
+        <score-partwise><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+        <part id="P1"><measure number="1"><attributes><staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>F</sign><line>4</line></clef></attributes>
+        <note dynamics="100"><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration>
+        <stem default-x="0" default-y="-35.5" relative-x="2" relative-y="-4">down</stem></note>
+        <note><rest/><duration>1</duration><stem>up</stem></note>
+        <note><rest/><duration>1</duration></note>
+        </measure></part></score-partwise>
+        """
+        let score = try Score(data: Data(xml.utf8))
+        let measure = score.parts[0].measures[0]
+        #expect(measure.attributes?.clefs.map(\.number) == [1, 2])
+        #expect(measure.attributes?.clef?.number == 1)
+        let notes = measure.contents.compactMap { $0.as(.note) }
+        #expect(notes[0].stem == .down)
+        #expect(notes[0].stemGeometry == .init(defaultX: 0, defaultY: -35.5, relativeX: 2, relativeY: -4))
+        #expect(notes[0].dynamics == 100)
+        #expect(notes[0].midiVelocity == 90)
+        #expect(notes[1].stem == .up)
+        #expect(notes[1].stemGeometry == nil)
+        #expect(notes[1].dynamics == nil)
+        #expect(notes[1].midiVelocity == nil)
+        #expect(notes[2].stem == nil)
+        #expect(notes[2].stemGeometry == nil)
+    }
+
+    @Test func preservesSingleClefAndStemAPI() throws {
+        let legacy = Measure.Attributes(clef: .init(sign: .treble, line: 2))
+        #expect(legacy.clef?.sign == .treble)
+        #expect(legacy.clef?.number == nil)
+        #expect(legacy.clefs.count == 1)
+        let score = Score(partList: .init(scores: [.init(id: "P1", name: "Piano")]), parts: [.init(id: "P1", measures: [
+            .init(number: "1", attributes: legacy, contents: [.note(.init(id: 0, duration: 1, stem: .down))])
+        ])])
+        let measure = try exportedXML(score).root["part"]["measure"]
+        #expect(measure["attributes"].children.filter { $0.name == "clef" }.count == 1)
+        #expect(measure["attributes"]["clef"].attributes.isEmpty)
+        #expect(measure["note"]["stem"].value == "down")
+        #expect(measure["note"]["stem"].attributes.isEmpty)
+        #expect(measure["note"].attributes["dynamics"] == nil)
+        #expect(Measure.Attributes().clef == nil)
+        #expect(Measure.Attributes().clefs.isEmpty)
+        let separate = Measure.Attributes(clefs: [.init(sign: .bass, line: 4, number: 2)])
+        #expect(separate.clef?.sign == .bass)
+        #expect(separate.clefs.count == 1)
+    }
+
+    @Test func optionalStemCoordinatesAndDynamicsAreSerialized() throws {
+        let score = Score(partList: .init(scores: [.init(id: "P1", name: "Piano")]), parts: [.init(id: "P1", measures: [
+            .init(number: "1", contents: [.note(.init(id: 0, duration: 1, stem: .up, stemGeometry: .init(relativeY: 0), dynamics: 0))])
+        ])])
+        let note = try exportedXML(score).root["part"]["measure"]["note"]
+        #expect(note.attributes["dynamics"] == "0.0")
+        #expect(note["stem"].attributes == ["relative-y": "0.0"])
+        #expect(Note(id: 0, dynamics: 75, midiVelocity: 90).dynamics == 75)
+        #expect(Note(id: 0, midiVelocity: 90).dynamics == 100)
+        #expect(Note(id: 0, midiVelocity: 0).midiVelocity == 0)
+    }
+
+    @Test func velocityConversionCoversEntireMIDIRange() {
+        for velocity in 0...127 {
+            let dynamics = Note.dynamics(forMIDIVelocity: velocity)
+            #expect(dynamics == Double(velocity) * 100 / 90)
+            #expect(Note.midiVelocity(forDynamics: dynamics) == velocity)
+            #expect(Note(id: velocity, midiVelocity: velocity).midiVelocity == velocity)
+        }
+        #expect(Note.dynamics(forMIDIVelocity: 90) == 100)
+        #expect(Note.dynamics(forMIDIVelocity: 127) > 100)
+    }
+
+    @Test func velocityConversionRoundsAndClamps() {
+        #expect(Note.midiVelocity(forDynamics: 15) == 14) // 13.5 rounds up.
+        #expect(Note.midiVelocity(forDynamics: 14.99) == 13)
+        #expect(Note.midiVelocity(forDynamics: 100) == 90)
+        #expect(Note.midiVelocity(forDynamics: -1) == 0)
+        #expect(Note.midiVelocity(forDynamics: 200) == 127)
+        #expect(Note.midiVelocity(forDynamics: .greatestFiniteMagnitude) == 127)
+        #expect(Note.midiVelocity(forDynamics: .infinity) == 127)
+        #expect(Note.midiVelocity(forDynamics: -.infinity) == 0)
+        #expect(Note.midiVelocity(forDynamics: .nan) == 0)
+    }
+}
