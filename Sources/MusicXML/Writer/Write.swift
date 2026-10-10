@@ -8,7 +8,7 @@ extension MusicXMLDocument {
         /// ZIP-compressed MusicXML with a container manifest.
         case mxl
         /// Uncompressed UTF-8 MusicXML.
-        case musicxml
+        case musicXML
     }
 
     /// Generates a partwise score and atomically replaces the destination file.
@@ -18,7 +18,7 @@ extension MusicXMLDocument {
     public func write(to destination: FinderItem, format: ExportFormat = .mxl) throws {
         let xml = Data(xmlDocument.xml.utf8)
         switch format {
-        case .musicxml:
+        case .musicXML:
             try xml.write(to: destination)
         case .mxl:
             try encodeMXL(xml: xml).write(to: destination)

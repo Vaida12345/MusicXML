@@ -80,11 +80,11 @@ private func extract(_ entry: Entry, from archive: Archive) throws -> Data {
     return data
 }
 
-private func exportedXML(_ score: Score, format: Score.ExportFormat = .musicxml) throws -> AEXMLDocument {
+private func exportedXML(_ score: Score, format: Score.ExportFormat = .musicXML) throws -> AEXMLDocument {
     try withDestination { destination in
         try score.write(to: destination, format: format)
         let data = try Data(contentsOf: destination.url)
-        if format == .musicxml { return try AEXMLDocument(xml: data) }
+        if format == .musicXML { return try AEXMLDocument(xml: data) }
         let archive = try Archive(data: data, accessMode: .read)
         return try AEXMLDocument(xml: extract(try #require(archive["score.musicxml"]), from: archive))
     }
@@ -217,7 +217,7 @@ private func exportedXML(_ score: Score, format: Score.ExportFormat = .musicxml)
     @Test func overwritesDestinationAndUsesExplicitFormat() throws {
         try withDestination { destination in
             try generatedScore().write(to: destination)
-            try generatedScore(title: "Replacement").write(to: destination, format: .musicxml)
+            try generatedScore(title: "Replacement").write(to: destination, format: .musicXML)
             let data = try Data(contentsOf: destination.url)
             #expect(!data.starts(with: [0x50, 0x4B]))
             #expect(try AEXMLDocument(xml: data).root["work"]["work-title"].value == "Replacement")
@@ -246,7 +246,7 @@ extension WriterTests {
     func conformsToMusicXMLSchema() throws {
         let schema = try #require(ProcessInfo.processInfo.environment["MUSICXML_SCHEMA_PATH"])
         try withDestination { destination in
-            try generatedScore().write(to: destination, format: .musicxml)
+            try generatedScore().write(to: destination, format: .musicXML)
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/xmllint")
             process.arguments = ["--nonet", "--noout", "--schema", schema, destination.url.path]
