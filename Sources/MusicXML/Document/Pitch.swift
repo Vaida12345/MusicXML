@@ -12,7 +12,7 @@ import AEXML
 extension MusicXMLDocument.Note {
 
     /// Pitch is represented as a combination of the step of the diatonic scale, the chromatic alteration, and the octave.
-    public struct Pitch: Equatable, Hashable {
+    public struct Pitch: Equatable, Sendable, Hashable, BitwiseCopyable {
         public let step: Step
         public let alteration: Double?
         /// 0 - 9
@@ -51,7 +51,7 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public enum Step: String, CaseIterable, Hashable, Equatable {
+        public enum Step: String, CaseIterable, Hashable, Sendable, BitwiseCopyable {
             case A, B, C, D, E, F, G
             
             public var offset: Int {

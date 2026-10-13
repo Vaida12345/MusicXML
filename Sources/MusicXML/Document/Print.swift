@@ -2,7 +2,7 @@ import AEXML
 
 extension MusicXMLDocument.Measure {
     /// Local layout overrides and explicit page/system breaks.
-    public struct Print {
+    public struct Print: Sendable, Hashable {
         public let newSystem: Bool?
         public let newPage: Bool?
         public let pageNumber: String?
@@ -13,7 +13,7 @@ extension MusicXMLDocument.Measure {
         public let measureDistance: Double?
         public let measureNumbering: MeasureNumbering?
 
-        public enum MeasureNumbering: String, CaseIterable { case none, measure, system }
+        public enum MeasureNumbering: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case none, measure, system }
 
         public init(newSystem: Bool? = nil, newPage: Bool? = nil, pageNumber: String? = nil, blankPages: Int? = nil, pageLayout: MusicXMLDocument.Layout.PageLayout? = nil, systemLayout: MusicXMLDocument.Layout.SystemLayout? = nil, staffLayouts: [MusicXMLDocument.Layout.StaffLayout] = [], measureDistance: Double? = nil, measureNumbering: MeasureNumbering? = nil) {
             self.newSystem = newSystem

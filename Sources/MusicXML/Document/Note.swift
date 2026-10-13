@@ -12,7 +12,7 @@ import DetailedDescription
 
 extension MusicXMLDocument {
 
-    public struct Note: Identifiable {
+    public struct Note: Identifiable, Sendable, Hashable {
         
         /// Unique identifier for this note, assigned by this package. This is the offset of this content in measure.
         public let id: Int
@@ -118,12 +118,12 @@ extension MusicXMLDocument {
             self.printObject = printObject
         }
         
-        public enum StemValue: String, CaseIterable {
+        public enum StemValue: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
             case up, down, none, double
         }
 
 
-        public struct TimeModification {
+        public struct TimeModification: Sendable, Hashable, BitwiseCopyable {
             
             /// Describes how many notes are played in the time usually occupied by ``normal``.
             public let actual: Int
@@ -142,7 +142,7 @@ extension MusicXMLDocument {
             }
         }
         
-        public enum Accidental: String, CaseIterable {
+        public enum Accidental: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
             case sharp
             case natural
             case flat
@@ -166,7 +166,7 @@ extension MusicXMLDocument {
             case slashFlat = "slash-flat"
         }
         
-        public struct Grace: Sendable, Hashable {
+        public struct Grace: Sendable, Hashable, BitwiseCopyable {
             public var hasSlash: Bool
             
             public init(hasSlash: Bool) {
@@ -189,7 +189,7 @@ extension MusicXMLDocument.Note: DetailedStringConvertible {
     public func detailedDescription(using descriptor: DetailedDescription.Descriptor<MusicXMLDocument.Note>) -> any DescriptionBlockProtocol {
         descriptor.container(self.pitch?.description ?? "rest") {
             if self.isChord {
-                descriptor.constant("chord")
+                descriptor.raw("chord")
             }
             descriptor.optional(for: \.grace)
             descriptor.optional(for: \.duration)

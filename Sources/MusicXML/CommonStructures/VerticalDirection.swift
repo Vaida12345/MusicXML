@@ -7,7 +7,7 @@
 
 
 extension MusicXMLDocument.Measure {
-    public enum VerticalDirection: String, CaseIterable, CustomStringConvertible {
+    public enum VerticalDirection: String, CaseIterable, CustomStringConvertible, Sendable, Hashable, BitwiseCopyable {
         case up, down
         
         public var description: String {
@@ -18,7 +18,7 @@ extension MusicXMLDocument.Measure {
         }
     }
     
-    public enum HorizontalDirection: String, CaseIterable, CustomStringConvertible {
+    public enum HorizontalDirection: String, CaseIterable, CustomStringConvertible, Sendable, Hashable, BitwiseCopyable {
         case forward, backward
         
         public var description: String {

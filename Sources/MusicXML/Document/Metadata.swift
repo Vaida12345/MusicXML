@@ -2,7 +2,7 @@ import AEXML
 
 extension MusicXMLDocument {
     /// Text used by score credits, textual directions, and notehead text.
-    public struct FormattedText {
+    public struct FormattedText: Sendable, Hashable {
         public let text: String
         public let font: Font?
         public let defaultX: Double?
@@ -10,8 +10,8 @@ extension MusicXMLDocument {
         public let justify: Justify?
         public let verticalAlignment: VerticalAlignment?
 
-        public enum Justify: String, CaseIterable { case left, center, right }
-        public enum VerticalAlignment: String, CaseIterable { case top, middle, bottom, baseline }
+        public enum Justify: String, CaseIterable, Sendable, BitwiseCopyable, Hashable { case left, center, right }
+        public enum VerticalAlignment: String, CaseIterable, Sendable, BitwiseCopyable, Hashable { case top, middle, bottom, baseline }
 
         public init(_ text: String, font: Font? = nil, defaultX: Double? = nil, defaultY: Double? = nil, justify: Justify? = nil, verticalAlignment: VerticalAlignment? = nil) {
             self.text = text
@@ -43,7 +43,7 @@ extension MusicXMLDocument {
     }
 
     /// Page text, independent of title/composer metadata. Page numbers start at 1.
-    public struct Credit {
+    public struct Credit: Sendable, Hashable {
         public let page: Int?
         /// MusicXML credit categories, such as "title", "composer", or "rights".
         public let types: [String]

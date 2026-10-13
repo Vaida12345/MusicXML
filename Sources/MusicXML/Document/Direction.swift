@@ -13,7 +13,7 @@ import MacroCollection
 
 extension MusicXMLDocument.Measure {
 
-    public struct Direction {
+    public struct Direction: Sendable, Hashable {
         
         public let contents: [Content]
         public let sound: Sound?
@@ -25,7 +25,7 @@ extension MusicXMLDocument.Measure {
         public let offset: Double?
         
         @accessingAssociatedValues
-        public enum Content {
+        public enum Content: Sendable, Hashable {
             case metronome(Metronome)
             case octaveShift(OctaveShift)
             /// Represents crescendo and diminuendo wedge symbols.
@@ -88,13 +88,13 @@ extension MusicXMLDocument.Measure {
         }
         
 
-        public struct Metronome {
+        public struct Metronome: Sendable, Hashable, BitwiseCopyable {
 
             public let beatUnit: MusicXMLDocument.Note.NoteType
             public let dots: Int
             public let rhs: RHS?
 
-            public enum RHS {
+            public enum RHS: Sendable, Hashable, BitwiseCopyable {
                 case perMinute(Int)
                 case beat(beatUnit: MusicXMLDocument.Note.NoteType, dots: Int)
             }
@@ -148,7 +148,7 @@ extension MusicXMLDocument.Measure {
             }
         }
         
-        public struct Sound {
+        public struct Sound: Sendable, Hashable, BitwiseCopyable {
             public let tempo: Int?
             /// Aka, velocity
             public let dynamics: Double?
@@ -165,7 +165,7 @@ extension MusicXMLDocument.Measure {
             }
         }
         
-        public struct OctaveShift {
+        public struct OctaveShift: Sendable, Hashable, BitwiseCopyable {
             public let phase: StartStopContinue
             /// Positive for up, negative for down. for example, 1 means 8va.
             ///
@@ -219,7 +219,7 @@ extension MusicXMLDocument.Measure {
             }
         }
         
-        public struct Wedge {
+        public struct Wedge: Sendable, Hashable, BitwiseCopyable {
             
             /// The value is crescendo for the start of a wedge that is closed at the left side, diminuendo for the start of a wedge that is closed on the right side, and stop for the end of a wedge.
             public let type: WedgeType
@@ -234,13 +234,13 @@ extension MusicXMLDocument.Measure {
                 self.type = type
             }
             
-            public enum WedgeType: String, CaseIterable {
+            public enum WedgeType: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
                 case crescendo, diminuendo, stop, `continue`
             }
             
         }
         
-        public struct Dynamics {
+        public struct Dynamics: Sendable, Hashable {
             
             public let values: [String]
             
@@ -255,7 +255,7 @@ extension MusicXMLDocument.Measure {
             }
         }
         
-        public struct Dashes {
+        public struct Dashes: Sendable, Hashable, BitwiseCopyable {
             
             public let type: StartStopContinue
             
@@ -279,7 +279,7 @@ extension MusicXMLDocument.Measure {
                 self.number = number
             }
             
-            public enum Value: String, CaseIterable {
+            public enum Value: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
                 case cresc = "cresc."
                 case dim = "dim."
                 case rit = "rit."
@@ -318,21 +318,21 @@ extension MusicXMLDocument.Measure.Direction: DetailedStringConvertible {
                         }
                     }
                 case .octaveShift(let shift):
-                    descriptor.constant("\(shift)")
+                    descriptor.raw("\(shift)")
                 case .wedge(let wedge):
-                    descriptor.constant("\(wedge)")
+                    descriptor.raw("\(wedge)")
                 case .dynamics(let dynamics):
-                    descriptor.constant("\(dynamics)")
+                    descriptor.raw("\(dynamics)")
                 case .dashes(let dashes):
-                    descriptor.constant("\(dashes)")
+                    descriptor.raw("\(dashes)")
                 case .words(let text), .rehearsal(let text):
-                    descriptor.constant(text.text)
-                case .segno: descriptor.constant("segno")
-                case .coda: descriptor.constant("coda")
-                case .pedal(let pedal): descriptor.constant("\(pedal)")
-                case .bracket(let bracket): descriptor.constant("\(bracket)")
+                    descriptor.raw(text.text)
+                case .segno: descriptor.raw("segno")
+                case .coda: descriptor.raw("coda")
+                case .pedal(let pedal): descriptor.raw("\(pedal)")
+                case .bracket(let bracket): descriptor.raw("\(bracket)")
                 case .unknown(let unknown):
-                    descriptor.constant("unknown(\(unknown))")
+                    descriptor.raw("unknown(\(unknown))")
                 }
             }
             descriptor.optional(for: \.sound)

@@ -1,7 +1,7 @@
 import AEXML
 
 extension MusicXMLDocument.Layout {
-    public struct Scaling {
+    public struct Scaling: Sendable, BitwiseCopyable, Hashable {
         public let millimeters: Double
         public let tenths: Double
 
@@ -23,7 +23,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public struct PageLayout {
+    public struct PageLayout: Sendable, Hashable {
         public let width: Double?
         public let height: Double?
         public let margins: [PageMargins]
@@ -49,7 +49,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public struct PageMargins {
+    public struct PageMargins: Sendable, BitwiseCopyable, Hashable {
         public let left: Double
         public let right: Double
         public let top: Double
@@ -83,7 +83,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public struct SystemLayout {
+    public struct SystemLayout: Sendable, BitwiseCopyable, Hashable {
         public let margins: SystemMargins?
         public let distance: Double?
         public let topDistance: Double?
@@ -109,7 +109,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public struct SystemMargins {
+    public struct SystemMargins: Sendable, BitwiseCopyable, Hashable {
         public let left: Double
         public let right: Double
 
@@ -131,7 +131,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public struct StaffLayout {
+    public struct StaffLayout: Sendable, BitwiseCopyable, Hashable {
         public let number: Int?
         public let distance: Double?
 
@@ -153,7 +153,7 @@ extension MusicXMLDocument.Layout {
         }
     }
 
-    public enum MarginType: String, CaseIterable {
+    public enum MarginType: String, CaseIterable, Sendable, BitwiseCopyable, Hashable {
         case odd, even, both
     }
 }

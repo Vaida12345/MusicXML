@@ -13,7 +13,7 @@ import DetailedDescription
 
 extension MusicXMLDocument.Measure {
 
-    public struct BarLine {
+    public struct BarLine: Sendable, Hashable {
         
         public let ending: Ending?
         public let `repeat`: Repeat?
@@ -31,7 +31,7 @@ extension MusicXMLDocument.Measure {
         }
 
 
-        public struct Ending {
+        public struct Ending: Sendable, Hashable {
             
             /// Indicates which times the ending is played, similar to the time-only attribute used by other elements.
             public let number: [Int]
@@ -59,7 +59,7 @@ extension MusicXMLDocument.Measure {
 
         }
 
-        public struct Repeat {
+        public struct Repeat: Sendable, Hashable, BitwiseCopyable {
             
             public let direction: HorizontalDirection
 

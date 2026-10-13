@@ -12,7 +12,7 @@ import DetailedDescription
 
 extension MusicXMLDocument {
 
-    public struct PartList: RandomAccessCollection {
+    public struct PartList: RandomAccessCollection, Sendable, Hashable {
         
         private let scores: [Element]
 
@@ -32,7 +32,7 @@ extension MusicXMLDocument {
             self.scores = scores
         }
 
-        public struct Element {
+        public struct Element: Sendable, Hashable {
            
             public let id: String
             public let name: String

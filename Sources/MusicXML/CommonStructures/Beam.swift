@@ -8,7 +8,7 @@
 
 extension MusicXMLDocument.Note {
     
-    public enum Beam: String, CaseIterable {
+    public enum Beam: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
         case backwardHook = "backward hook"
         case begin
         case `continue`

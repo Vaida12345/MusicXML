@@ -54,11 +54,11 @@ extension AEXMLElement {
 }
 
 extension MusicXMLDocument {
-    public enum Placement: String, CaseIterable, Sendable {
+    public enum Placement: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
         case above, below
     }
 
-    public enum LineType: String, CaseIterable, Sendable {
+    public enum LineType: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
         case solid, dashed, dotted, wavy
     }
 }

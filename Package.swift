@@ -39,6 +39,5 @@ let package = Package(
             name: "MusicXMLTests",
             dependencies: ["MusicXML", "FinderItem", "AEXML", "ZIPFoundation"]
         ),
-    ],
-    swiftLanguageModes: [.v6]
+    ]
 )

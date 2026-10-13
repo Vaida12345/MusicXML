@@ -11,7 +11,7 @@ import DetailedDescription
 import Essentials
 
 
-public struct MusicXMLDocument {
+public struct MusicXMLDocument: Sendable {
     
     public let layout: Layout
     public let version: String?

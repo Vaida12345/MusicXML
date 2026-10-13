@@ -12,7 +12,7 @@ import DetailedDescription
 
 extension MusicXMLDocument {
 
-    public struct Part {
+    public struct Part: Sendable, Hashable {
         
         public let id: String
         public let measures: [Measure]

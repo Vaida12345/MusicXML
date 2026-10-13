@@ -2,7 +2,7 @@ import AEXML
 import DetailedDescription
 
 extension MusicXMLDocument.Note {
-    public struct Notations: DetailedStringConvertible {
+    public struct Notations: DetailedStringConvertible, Sendable, Hashable {
         public let arpeggiations: [Arpeggiate]
         public let glissandos: [Glissando]
         public let slurs: [Slur]
@@ -73,7 +73,7 @@ extension MusicXMLDocument.Note {
             }.hideEmptySequence()
         }
 
-        public struct Arpeggiate {
+        public struct Arpeggiate: Sendable, Hashable, BitwiseCopyable {
             public let number: Int?
 
             public init(number: Int? = nil) { self.number = number }
@@ -89,7 +89,7 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public struct Glissando {
+        public struct Glissando: Sendable, Hashable, BitwiseCopyable {
             public let type: MusicXMLDocument.Measure.StartStop
             public let number: Int?
 
@@ -110,7 +110,7 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public struct Slur {
+        public struct Slur: Sendable, Hashable, BitwiseCopyable {
             public let type: MusicXMLDocument.Measure.StartStopContinue
             public let number: Int?
             public let placement: MusicXMLDocument.Placement?
@@ -139,13 +139,13 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public struct Articulation {
+        public struct Articulation: Sendable, Hashable {
             public let kind: Kind
             public let placement: MusicXMLDocument.Placement?
             /// Text for breath marks, caesuras, and other-articulation.
             public let text: String?
 
-            public enum Kind: String, CaseIterable {
+            public enum Kind: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
                 case accent, staccato, tenuto, staccatissimo, spiccato, scoop, plop, doit, falloff, stress, unstress
                 case strongAccent = "strong-accent"
                 case detachedLegato = "detached-legato"
@@ -175,7 +175,7 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public struct Ornament {
+        public struct Ornament: Sendable, Hashable {
             public let kind: Kind
             public let placement: MusicXMLDocument.Placement?
             public let number: Int?
@@ -184,14 +184,14 @@ extension MusicXMLDocument.Note {
             /// Tremolo strokes, or text for other-ornament / accidental-mark.
             public let value: String?
 
-            public enum Kind: String, CaseIterable {
+            public enum Kind: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
                 case trillMark = "trill-mark"
                 case turn, delayedTurn = "delayed-turn", invertedTurn = "inverted-turn", delayedInvertedTurn = "delayed-inverted-turn"
                 case verticalTurn = "vertical-turn", invertedVerticalTurn = "inverted-vertical-turn"
                 case shake, wavyLine = "wavy-line", mordent, invertedMordent = "inverted-mordent", schleifer, tremolo
                 case haydn, accidentalMark = "accidental-mark", other = "other-ornament"
             }
-            public enum TremoloType: String, CaseIterable { case single, start, stop, unmeasured }
+            public enum TremoloType: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case single, start, stop, unmeasured }
 
             public init(_ kind: Kind, placement: MusicXMLDocument.Placement? = nil, number: Int? = nil, type: MusicXMLDocument.Measure.StartStopContinue? = nil, tremoloType: TremoloType? = nil, value: String? = nil) {
                 self.kind = kind
@@ -222,7 +222,7 @@ extension MusicXMLDocument.Note {
             }
         }
 
-        public struct Tuplet {
+        public struct Tuplet: Sendable, Hashable, BitwiseCopyable {
             public let type: MusicXMLDocument.Measure.StartStop
             public let number: Int?
             public let bracket: Bool?
@@ -232,7 +232,7 @@ extension MusicXMLDocument.Note {
             public let actual: Portion?
             public let normal: Portion?
 
-            public enum Display: String, CaseIterable { case actual, both, none }
+            public enum Display: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case actual, both, none }
 
             public init(type: MusicXMLDocument.Measure.StartStop, number: Int? = nil, bracket: Bool? = nil, placement: MusicXMLDocument.Placement? = nil, showNumber: Display? = nil, showType: Display? = nil, actual: Portion? = nil, normal: Portion? = nil) {
                 self.type = type
@@ -245,7 +245,7 @@ extension MusicXMLDocument.Note {
                 self.normal = normal
             }
 
-            public struct Portion {
+            public struct Portion: Sendable, Hashable, BitwiseCopyable {
                 public let number: Int?
                 public let type: MusicXMLDocument.Note.NoteType?
                 public let dots: Int

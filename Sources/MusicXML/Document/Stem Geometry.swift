@@ -4,7 +4,7 @@ extension MusicXMLDocument.Note {
     /// Coordinates for the end of a stem, in tenths of a staff space.
     /// The exporter calculates these from its stem-length and beam preferences.
     /// Supply a stem direction alongside geometry when constructing a note.
-    public struct StemGeometry: Equatable, Sendable {
+    public struct StemGeometry: Equatable, Sendable, Hashable, BitwiseCopyable {
         /// Horizontal endpoint relative to the left side of the note.
         public let defaultX: Double?
         /// Vertical endpoint relative to the top staff line.

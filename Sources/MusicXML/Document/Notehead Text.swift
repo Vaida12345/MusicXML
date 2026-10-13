@@ -3,7 +3,7 @@ import AEXML
 extension MusicXMLDocument.Note {
     /// Text inside a staff notehead, such as "1", "C", or "Do".
     /// Pitch, clef, duration, and note type retain their ordinary musical meanings.
-    public struct NoteheadText {
+    public struct NoteheadText: Sendable, Hashable {
         /// Ordered display-text segments, each with its own optional formatting.
         public let displayTexts: [MusicXMLDocument.FormattedText]
 

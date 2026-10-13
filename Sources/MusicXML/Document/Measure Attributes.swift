@@ -12,7 +12,7 @@ import DetailedDescription
 
 extension MusicXMLDocument.Measure {
 
-    public struct Attributes {
+    public struct Attributes: Sendable, Hashable {
         
         public let divisions: Int?
         public let keySignature: KeySignature?
@@ -52,14 +52,14 @@ extension MusicXMLDocument.Measure {
 
 extension MusicXMLDocument.Measure.Attributes {
 
-    public struct KeySignature: Equatable {
+    public struct KeySignature: Hashable, Sendable {
         public let octave: [Int]
         /// Indicates that the old key signature should be cancelled before the new one appears
         public let cancel: Bool
         
         public let value: Value
         
-        public enum Value: Equatable {
+        public enum Value: Hashable, Sendable {
             /// The number of flats or sharps in a traditional key signature
             ///
             /// Negative numbers are used for flats and positive numbers for sharps, reflecting the key's placement within the circle of fifths
@@ -69,7 +69,7 @@ extension MusicXMLDocument.Measure.Attributes {
             
             case none
             
-            public struct NonTraditionalValue: Equatable {
+            public struct NonTraditionalValue: Sendable, BitwiseCopyable, Hashable {
                 public let step: MusicXMLDocument.Note.Pitch.Step
                 public let alter: Double
 
@@ -132,12 +132,12 @@ extension MusicXMLDocument.Measure.Attributes {
             }
         }
 
-        public enum Mode: String, CaseIterable, Equatable {
+        public enum Mode: String, CaseIterable, Hashable, BitwiseCopyable, Sendable {
             case major, minor, dorian, phrygian, lydian, mixolydian, aeolian, ionian, locrian, none
         }
     }
 
-    public struct TimeSignature: CustomStringConvertible {
+    public struct TimeSignature: CustomStringConvertible, Sendable, BitwiseCopyable, Hashable {
         public let beats: Int
         public let beatType: Int
 
@@ -169,7 +169,7 @@ extension MusicXMLDocument.Measure.Attributes {
         }
     }
 
-    public struct Clef {
+    public struct Clef: Sendable, BitwiseCopyable, Hashable {
         public let sign: Sign
         /// Standard values are 2 for the G sign (treble clef), 4 for the F sign (bass clef), and 3 for the C sign (alto clef)
         public let line: Int
@@ -190,7 +190,7 @@ extension MusicXMLDocument.Measure.Attributes {
             self.number = number
         }
 
-        public enum Sign: String, CaseIterable, CustomStringConvertible {
+        public enum Sign: String, CaseIterable, CustomStringConvertible, Sendable, BitwiseCopyable, Hashable {
             case treble = "G", bass = "F"
 
             public var description: String {

@@ -2,7 +2,7 @@ import AEXML
 
 extension MusicXMLDocument {
     /// Score-wide defaults. All dimensions except scaling's millimeters are in tenths of a staff space.
-    public struct Layout {
+    public struct Layout: Sendable, Hashable {
         public let pageWidth: Double?
         public let pageHeight: Double?
         public let pageMargins: [PageMargins]
@@ -61,7 +61,7 @@ extension MusicXMLDocument {
         }
     }
 
-    public struct Font {
+    public struct Font: Sendable, Hashable {
         public let family: String?
         public let size: Double?
         public let style: Style?
@@ -74,8 +74,8 @@ extension MusicXMLDocument {
             self.weight = weight
         }
 
-        public enum Style: String, CaseIterable { case normal, italic }
-        public enum Weight: String, CaseIterable { case normal, bold }
+        public enum Style: String, CaseIterable, Sendable, BitwiseCopyable, Hashable { case normal, italic }
+        public enum Weight: String, CaseIterable, Sendable, BitwiseCopyable, Hashable { case normal, bold }
 
         init(element: AEXMLElement) throws(ParseError) {
             self.family = element.attributes["font-family"]
@@ -100,7 +100,7 @@ extension MusicXMLDocument {
 }
 
 extension MusicXMLDocument.Layout {
-    public struct Appearance {
+    public struct Appearance: Sendable, Hashable {
         public let lineWidths: [LineWidth]
         public let noteSizes: [NoteSize]
 
@@ -109,7 +109,7 @@ extension MusicXMLDocument.Layout {
             self.noteSizes = noteSizes
         }
 
-        public struct LineWidth {
+        public struct LineWidth: Sendable, Hashable {
             /// MusicXML line category, such as "staff", "stem", or "beam".
             public let type: String
             public let width: Double
@@ -125,12 +125,17 @@ extension MusicXMLDocument.Layout {
             }
         }
 
-        public struct NoteSize {
+        public struct NoteSize: Sendable, BitwiseCopyable, Hashable {
             public let type: Kind
             /// Percentage of the normal note size.
             public let size: Double
 
-            public enum Kind: String, CaseIterable { case cue, grace; case graceCue = "grace-cue"; case large }
+            public enum Kind: String, CaseIterable, Sendable, BitwiseCopyable, Hashable {
+                case cue
+                case grace
+                case graceCue = "grace-cue"
+                case large
+            }
 
             public init(type: Kind, size: Double) {
                 self.type = type

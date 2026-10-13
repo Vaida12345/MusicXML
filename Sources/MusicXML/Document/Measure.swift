@@ -14,7 +14,7 @@ import MacroCollection
 extension MusicXMLDocument {
 
     /// Includes the basic musical data
-    public struct Measure {
+    public struct Measure: Sendable, Hashable {
         
         /// The attribute that identifies the measure.
         public let number: String
@@ -76,7 +76,7 @@ extension MusicXMLDocument {
         }
 
         @accessingAssociatedValues
-        public enum Content {
+        public enum Content: Sendable, Hashable {
             case note(MusicXMLDocument.Note)
             case unknown(String)
             case backup(duration: Int)

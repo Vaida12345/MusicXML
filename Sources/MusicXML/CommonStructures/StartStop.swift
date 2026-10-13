@@ -7,16 +7,16 @@
 
 
 extension MusicXMLDocument.Measure {
-    public enum StartStop: String, CaseIterable, Hashable, Sendable {
+    public enum StartStop: String, CaseIterable, Hashable, Sendable, BitwiseCopyable {
         case start, stop
     }
     
-    public enum StartStopContinue: String, CaseIterable, Sendable {
+    public enum StartStopContinue: String, CaseIterable, Hashable, Sendable, BitwiseCopyable {
         case start, stop, `continue`
     }
     
     
-    public enum StartStopDiscontinue: String, CaseIterable, Sendable {
+    public enum StartStopDiscontinue: String, CaseIterable, Hashable, Sendable, BitwiseCopyable {
         case start, stop, discontinue
     }
 }

@@ -6,7 +6,7 @@
 //
 
 extension MusicXMLDocument.Note {
-    public enum NoteType: String, CaseIterable {
+    public enum NoteType: String, CaseIterable, Sendable, Hashable, BitwiseCopyable {
         case oneThousandTwentyFourth = "1024th"
         case fiveHundredTwelfth = "512th"
         case twoHundredFiftySixth = "256th"

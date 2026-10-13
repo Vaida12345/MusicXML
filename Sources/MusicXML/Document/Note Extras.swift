@@ -1,7 +1,7 @@
 import AEXML
 
 extension MusicXMLDocument.Note {
-    public struct Unpitched {
+    public struct Unpitched: Sendable, Hashable, BitwiseCopyable {
         public let displayStep: Pitch.Step?
         public let displayOctave: Int?
 
@@ -23,7 +23,7 @@ extension MusicXMLDocument.Note {
         }
     }
 
-    public struct Lyric {
+    public struct Lyric: Sendable, Hashable {
         public let number: String?
         public let name: String?
         public let placement: MusicXMLDocument.Placement?
@@ -31,7 +31,7 @@ extension MusicXMLDocument.Note {
         public let text: String?
         public let extend: MusicXMLDocument.Measure.StartStopContinue?
 
-        public enum Syllabic: String, CaseIterable { case single, begin, end, middle }
+        public enum Syllabic: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case single, begin, end, middle }
 
         public init(text: String? = nil, syllabic: Syllabic? = nil, extend: MusicXMLDocument.Measure.StartStopContinue? = nil, number: String? = nil, name: String? = nil, placement: MusicXMLDocument.Placement? = nil) {
             self.text = text

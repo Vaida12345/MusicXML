@@ -1,14 +1,14 @@
 import AEXML
 
 extension MusicXMLDocument.Measure.Direction {
-    public struct Pedal {
+    public struct Pedal: Sendable, Hashable, BitwiseCopyable {
         public let type: Kind
         public let number: Int?
         public let line: Bool?
         public let sign: Bool?
         public let abbreviated: Bool?
 
-        public enum Kind: String, CaseIterable { case start, stop, sostenuto, change, `continue`, resume, discontinue }
+        public enum Kind: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case start, stop, sostenuto, change, `continue`, resume, discontinue }
 
         public init(type: Kind, number: Int? = nil, line: Bool? = nil, sign: Bool? = nil, abbreviated: Bool? = nil) {
             self.type = type
@@ -36,14 +36,14 @@ extension MusicXMLDocument.Measure.Direction {
         }
     }
 
-    public struct Bracket {
+    public struct Bracket: Sendable, Hashable, BitwiseCopyable {
         public let type: MusicXMLDocument.Measure.StartStopContinue
         public let number: Int?
         public let lineEnd: LineEnd
         public let lineType: MusicXMLDocument.LineType?
         public let endLength: Double?
 
-        public enum LineEnd: String, CaseIterable { case up, down, both, arrow, none }
+        public enum LineEnd: String, CaseIterable, Sendable, Hashable, BitwiseCopyable { case up, down, both, arrow, none }
 
         public init(type: MusicXMLDocument.Measure.StartStopContinue, lineEnd: LineEnd, number: Int? = nil, lineType: MusicXMLDocument.LineType? = nil, endLength: Double? = nil) {
             self.type = type
