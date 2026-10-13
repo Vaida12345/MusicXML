@@ -5,7 +5,10 @@ import PackageDescription
 
 let package = Package(
     name: "MusicXML",
-    platforms: [.macOS(.v13), .iOS(.v16)],
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v13)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
@@ -19,7 +22,7 @@ let package = Package(
         .package(url: "https://github.com/Vaida12345/MacroCollection.git", from: "1.0.0"),
         .package(url: "https://github.com/Vaida12345/FinderItem.git", from: "2.0.1"),
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.0"),
-        .package(url: "https://github.com/tadija/AEXML.git", from: "4.7.0")
+        .package(url: "https://github.com/tadija/AEXML.git", from: "4.7.2")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
