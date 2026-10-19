@@ -19,6 +19,11 @@ extension MusicXMLDocument {
         /// The attribute that identifies the measure.
         public let number: String
 
+        /// The horizontal width of the measure in tenths, as laid out by the source engraver.
+        ///
+        /// This is the optional `width` attribute of `<measure>`; `nil` when the source does not specify it.
+        public let width: Double?
+
         public let attributes: Attributes?
 
         public let contents: [Content]
@@ -26,6 +31,7 @@ extension MusicXMLDocument {
         init(element: AEXMLElement) throws(ParseError) {
             assert(element.name == "measure")
             self.number = try element.attribute(named: "number", as: String.self)
+            self.width = try element.optionalAttribute("width", as: Double.self)
 
             var contents: [Content] = []
             for (index, child) in element.children.enumerated() {
@@ -69,8 +75,16 @@ extension MusicXMLDocument {
             self.attributes = try element.withOptionalChild(named: "attributes", Attributes.init)
         }
         
-        public init(number: String, attributes: MusicXMLDocument.Measure.Attributes? = nil, contents: [MusicXMLDocument.Measure.Content]) {
+        /// Creates a measure.
+        ///
+        /// - Parameters:
+        ///   - number: The attribute that identifies the measure.
+        ///   - width: The horizontal width of the measure in tenths, or `nil` to let the engraver decide.
+        ///   - attributes: The measure attributes, such as divisions, key, time, and clefs.
+        ///   - contents: The musical contents of the measure, in document order.
+        public init(number: String, width: Double? = nil, attributes: MusicXMLDocument.Measure.Attributes? = nil, contents: [MusicXMLDocument.Measure.Content]) {
             self.number = number
+            self.width = width
             self.attributes = attributes
             self.contents = contents
         }

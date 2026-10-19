@@ -94,6 +94,7 @@ extension MusicXMLDocument.Part {
 extension MusicXMLDocument.Measure {
     var xmlElement: AEXMLElement {
         let element = AEXMLElement(name: "measure", attributes: ["number": number])
+        element.setAttribute("width", width)
         // Printing instructions normally precede attributes at the beginning of a measure.
         let leadingPrints = contents.prefix { if case .print = $0 { return true }; return false }
         for content in leadingPrints { if case .print(let print) = content { element.addChild(print.xmlElement) } }
